@@ -1,5 +1,5 @@
 ---
--- Nmap NSE AXISwebcam-recon.nse - Version 1.9
+-- Nmap NSE AXISwebcam-recon.nse - Version 1.10
 -- Copy to: /usr/share/nmap/scripts/AXISwebcam-recon.nse
 -- Update NSE database: sudo nmap --script-updatedb
 -- execute: nmap --script-help AXISwebcam-recon.nse
@@ -24,7 +24,6 @@ nmap -sS -vv -T5 -iR 700 -p 8080-8086 --open --script http-headers,AXISwebcam-re
 
 ]]
 
-
 ---
 -- @usage
 -- nmap --script-help AXISwebcam-recon.nse
@@ -46,12 +45,12 @@ nmap -sS -vv -T5 -iR 700 -p 8080-8086 --open --script http-headers,AXISwebcam-re
 -- @args payload.agent User-agent to send in request - Default: iPhone,safari
 ---
 
-
 author = "r00t-3xp10it & Cleiton Pinheiro"
 license = "Same as Nmap--See http://nmap.org/book/man-legal.html"
 categories = {"safe", "discovery"}
 
-local stdnse = require ('stdnse') --> nse args usage
+
+local stdnse = require ('stdnse')
 local shortport = require "shortport"
 local string = require "string"
 local http = require "http"
@@ -62,17 +61,18 @@ limmit = 0
 
 portrule = shortport.port_or_service({80, 81, 82, 83, 84, 85, 86, 92, 8080, 8081, 8082, 8083, 55752, 55754}, "http, http-proxy", "tcp", "open")
 
-
 action = function(host, port)
-print("\nBrute force AXIS network camera URL:")
+print("|AXISwebcam-recon:")
+print("|  Brute force AXIS network camera URL:")
+
 uri = stdnse.get_script_args(SCRIPT_NAME..".uri") or "/indexFrame.shtml"
 
 -- Check User Input uri response
 local check_uri = http.get(host, port, uri)
 if ( check_uri.status == 401 ) then
-print("| ["..check_uri.status.."] => http://"..host.ip..":"..port.number..uri.." (AUTH LOGIN FOUND)")
+print("|    ["..check_uri.status.."] => http://"..host.ip..":"..port.number..uri.." (AUTH LOGIN FOUND)")
 elseif ( check_uri.status == 404 ) then
-print("| ["..check_uri.status.."] "..host.ip.." => "..uri)
+print("|    ["..check_uri.status.."] "..host.ip..":"..port.number.." => "..uri)
 
 uril = {"/webcam_code.php", "/view/view.shtml", "/indexFrame.shtml", "/view/index.shtml", "/view/index2.shtml", "/webcam/view.shtml", "/ViewerFrame.shtml", "/RecordFrame?Mode=", "/MultiCameraFrame?Mode=", "/view/viewer_index.shtml", "/visitor_center/i-cam.html", "/index.shtml", "/stadscam/Live95j.asp", "/sub06/cam.php", "/CgiStart"}
 
@@ -80,17 +80,17 @@ uril = {"/webcam_code.php", "/view/view.shtml", "/indexFrame.shtml", "/view/inde
    for i, intable in pairs(uril) do
       local res = http.get(host, port, intable)
       if ( res.status == 200 ) then
-         print("| ["..res.status.."] "..host.ip.." => "..intable)
+         print("|    ["..res.status.."] "..host.ip..":"..port.number.." => "..intable)
          uri = intable
          break
       else
         limmit = limmit+1
-        print("| ["..res.status.."] "..host.ip.." => "..intable)
+        print("|    ["..res.status.."] "..host.ip..":"..port.number.." => "..intable)
          if ( limmit == 15 ) then --> why 15? Because its the number of URI links present in the {table} list.
             print("|")
-            print("|   STATUS: NONE AXIS WEBCAM FOUND")
-            print("|     REASON: None Match uri found in AXISwebcam-recon db")
-            print("|_      Module Author: r00t-3xp10it & Cleiton Pinheiro\n")
+            print("|  STATUS: NONE AXIS WEBCAM FOUND")
+            print("|    REASON: none uri match found in AXISwebcam DB")
+            print("|_     Module Author: r00t-3xp10it & Cleiton Pinheiro\n")
             return 
          end
       end
@@ -98,26 +98,23 @@ uril = {"/webcam_code.php", "/view/view.shtml", "/indexFrame.shtml", "/view/inde
 
 -- Diferent error codes (mosquito needs this seting)
 elseif ( check_uri.status == 400 or check_uri.status == 403 or check_uri.status == 405 or check_uri.status == 500 or check_uri.status == 502 or check_uri.status == 503 or check_uri.status == 307 or check_uri.status == 302 or check_uri.status == 301 or check_uri.status == nil ) then
-   print("| ["..check_uri.status.."] "..host.ip.." => "..uri)
+   print("|    ["..check_uri.status.."] "..host.ip..":"..port.number.." => "..uri)
    do return end
 else
-   print("| ["..check_uri.status.."] "..host.ip.." => "..uri)
+   print("|    ["..check_uri.status.."] "..host.ip..":"..port.number.." => "..uri)
 end
-print(" _")
 
 
--- Manipulate TCP packet 'header' with false information about attacker :D
 local options = {header={}}
+-- Manipulate TCP packet 'header' with false information about attacker :D
 options['header']['User-Agent'] = stdnse.get_script_args(SCRIPT_NAME..".agent") or "Mozilla/5.0 (iPhone; CPU iPhone OS 6_1_4 like Mac OS X) AppleWebKit/536.26 (KHTML, like Gecko) Version/6.0 Mobile/10B350 Safari/8536.25"
 options['header']['Accept-Language'] = "en-GB,en;q=0.8,sv"
 options['header']['Cache-Control'] = "no-store"
 
-
 -- Read response from target (http.get)
 local response = http.get(host, port, uri, options)
   if ( response.status == 200 ) then
-    local title = string.match(response.body, "<[Tt][Ii][Tt][Ll][Ee][^>]*>([^<]*)</[Tt][Ii][Tt][Ll][Ee]>")
-    print("| AXISwebcam-recon:")
+     local title = string.match(response.body, "<[Tt][Ii][Tt][Ll][Ee][^>]*>([^<]*)</[Tt][Ii][Tt][Ll][Ee]>")
 
      -- List {table} of HTTP TITLE tags
      tbl = {"TL-WR740N", 
@@ -126,7 +123,7 @@ local response = http.get(host, port, uri, options)
      "AXIS 2400 Video Server", 
      "Network Camera TUCCAM1", 
      "AXIS 243Q(2) Blade 4.45", 
-     "Network Camera CapitanÃ­a", 
+     "Network Camera Capitanía", 
      "AXIS P5514 Network Camera", 
      "AXIS Q1615 Network Camera", 
      "AXIS P1357 Network Camera", 
@@ -193,14 +190,13 @@ local response = http.get(host, port, uri, options)
      for i, intable in pairs(tbl) do
        local validar = string.match(title, intable)
        if ( validar ~= nil or title == intable ) then
-           print("|\n|   STATUS: AXIS WEBCAM FOUND\n|     TITLE: "..intable.."\n|       WEBCAM ACCESS: http://"..host.ip..":"..port.number..uri.."\n|       Module Author: r00t-3xp10it & Cleiton Pinheiro\n|_")
+           print("|\n|   STATUS: AXIS WEBCAM FOUND\n|     TITLE: "..intable.."\n|       WEBCAM ACCESS: http://"..host.ip..":"..port.number..uri.."\n|      Module Author: r00t-3xp10it & Cleiton Pinheiro\n|_\n")
            break
         else
            print("|  TESTING: "..intable)
            f = f+1
            if (f == 68) then
-             print("|_\n")
-             return "\n   STATUS: NONE AXIS WEBCAM FOUND\n     Module Author: r00t-3xp10it & Cleiton Pinheiro\n\n"
+             return "|\n|   STATUS: NONE AXIS WEBCAM FOUND\n|     Module Author: r00t-3xp10it & Cleiton Pinheiro\n|_\n"
            end
         end
      end
