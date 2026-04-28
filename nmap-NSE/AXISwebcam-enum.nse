@@ -18,10 +18,10 @@ this script tests a List of AXIS default [/url's] available in our database to b
 
 Some Syntax examples:
 nmap --script-help AXISwebcam-enum.nse
-nmap -sS -T4 216.99.115.136 -p 80-86,8080-8082 --open --script AXISwebcam-enum
+nmap -sS -T4 222.155.98.15 -p 80-86,8080-8082 --open --script AXISwebcam-enum
 nmap -sS -T4 50.93.227.204 -p 80-86,8080-8082 --script AXISwebcam-enum --script-args agent="Mozilla/5.0 (compatible; EvilMonkey)"
 nmap -sS -T4 194.150.15.187 -p 80,8080-8082 --open --script AXISwebcam-enum --script-args agent="Mozilla/5.0 (compatible),uri=/fd"
-nmap -sS -T4 217.78.137.43 -p 80-86,8080-8082 --open --script AXISwebcam-enum --script-args uri="/CgiStart?page=Single&Mode=Motion&Language=1"
+nmap -sS -T4 217.78.137.43 -p 80-86,8080-8082 --open --script AXISwebcam-enum --script-args uri="/CgiStart/new-index.shtml"
 nmap -sS -vv -T5 -iR 700 -p 8080-8086 --open --script AXISwebcam-enum -D 65.49.82.3 -oN AxisWebCam_reports.txt
 
 ]]
@@ -29,10 +29,10 @@ nmap -sS -vv -T5 -iR 700 -p 8080-8086 --open --script AXISwebcam-enum -D 65.49.8
 ---
 -- @usage
 -- nmap --script-help AXISwebcam-enum.nse
--- nmap -sS -T4 216.99.115.136 -p 80-86,8080-8082 --open --script AXISwebcam-enum
+-- nmap -sS -T4 222.155.98.15 -p 80-86,8080-8082 --open --script AXISwebcam-enum
 -- nmap -sS -T4 50.93.227.204 -p 80-86,8080-8082 --script AXISwebcam-enum --script-args agent="Mozilla/5.0 (compatible; EvilMonkey)"
 -- nmap -sS -T4 194.150.15.187 -p 80,8080-8082 --open --script AXISwebcam-enum --script-args agent="Mozilla/5.0 (compatible),uri=/fd"
--- nmap -sS -T4 217.78.137.43 -p 8080-8082 --open --script AXISwebcam-enum --script-args uri="/CgiStart?page=Single&Mode=Motion&Language=1"
+-- nmap -sS -T4 217.78.137.43 -p 8080-8082 --open --script AXISwebcam-enum --script-args uri="/CgiStart/new-index.shtml"
 -- nmap -sS -vv -T5 -iR 700 -p 8080-8086 --open --script AXISwebcam-enum -D 65.49.82.3 -oN AxisWebCam_reports.txt
 -- @output
 -- PORT     STATE SERVICE VERSION
@@ -107,7 +107,15 @@ elseif ( check_uri.status == 404 ) then --> uri not found
      end
   end
 
-elseif ( check_uri.status == 400 or check_uri.status == 403 or check_uri.status == 405 or check_uri.status == 500 or check_uri.status == 502 or check_uri.status == 503 or check_uri.status == 307 or check_uri.status == 302 or check_uri.status == 301 or check_uri.status == nil ) then
+elseif ( check_uri.status == nil ) then
+   print("|    [nil] "..host.ip..":"..port.number.." => socket error")
+   print("|")
+   print("|  STATUS: NONE AXIS WEBCAM FOUND")
+   print("|    ABORT: uri check error code: nil [socket error]")
+   print("|      Module Author: r00t-3xp10it & Cleiton Pinheiro")
+   print("|_\n")
+   do return end
+elseif ( check_uri.status == 400 or check_uri.status == 403 or check_uri.status == 405 or check_uri.status == 500 or check_uri.status == 502 or check_uri.status == 503 or check_uri.status == 307 or check_uri.status == 302 or check_uri.status == 301 ) then
    print("|    ["..check_uri.status.."] "..host.ip..":"..port.number.." => uri not found")
    print("|")
    print("|  STATUS: NONE AXIS WEBCAM FOUND")
