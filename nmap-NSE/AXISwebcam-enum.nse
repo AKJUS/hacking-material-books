@@ -19,21 +19,21 @@ this script tests a List of AXIS default [/url's] available in our database to b
 Some Syntax examples:
 nmap --script-help AXISwebcam-enum.nse
 nmap -sS -T4 222.155.98.15 -p 80-86,8080-8082 --open --script AXISwebcam-enum
-nmap -sS -T4 50.93.227.204 -p 80-86,8080-8082 --script AXISwebcam-enum --script-args agent="Mozilla/5.0 (compatible; EvilMonkey)"
-nmap -sS -T4 194.150.15.187 -p 80,8080-8082 --open --script AXISwebcam-enum --script-args agent="Mozilla/5.0 (compatible),uri=/fd"
-nmap -sS -T4 217.78.137.43 -p 80-86,8080-8082 --open --script AXISwebcam-enum --script-args uri="/CgiStart/new-index.shtml"
-nmap -sS -vv -T5 -iR 700 -p 8080-8086 --open --script AXISwebcam-enum -D 65.49.82.3 -oN AxisWebCam_reports.txt
+nmap -sS -T4 192.46.209.62 -p 8082 --script AXISwebcam-enum --script-args agent="Mozilla/5.0 (compatible; EvilMonkey)"
+nmap -sS -T4 193.93.22.133 -p 8080-8082 --open --script AXISwebcam-enum --script-args agent="Mozilla/5.0 (compatible),uri=/fd"
+nmap -sS -T4 161.81.122.107 -p 8080-8082 --open --script AXISwebcam-enum --script-args uri="/CgiStart/another-index-name.shtml"
+nmap -sS -v -T5 -iR 800 -p 8080-8086 --open --script AXISwebcam-enum -D 4.207.247.138,52.123.131.14
 
 ]]
 
 ---
 -- @usage
 -- nmap --script-help AXISwebcam-enum.nse
--- nmap -sS -T4 222.155.98.15 -p 80-86,8080-8082 --open --script AXISwebcam-enum
--- nmap -sS -T4 50.93.227.204 -p 80-86,8080-8082 --script AXISwebcam-enum --script-args agent="Mozilla/5.0 (compatible; EvilMonkey)"
--- nmap -sS -T4 194.150.15.187 -p 80,8080-8082 --open --script AXISwebcam-enum --script-args agent="Mozilla/5.0 (compatible),uri=/fd"
--- nmap -sS -T4 217.78.137.43 -p 8080-8082 --open --script AXISwebcam-enum --script-args uri="/CgiStart/new-index.shtml"
--- nmap -sS -vv -T5 -iR 700 -p 8080-8086 --open --script AXISwebcam-enum -D 65.49.82.3 -oN AxisWebCam_reports.txt
+-- nnmap -sS -T4 222.155.98.15 -p 80-86,8080-8082 --open --script AXISwebcam-enum
+-- nmap -sS -T4 192.46.209.62 -p 8082 --script AXISwebcam-enum --script-args agent="Mozilla/5.0 (compatible; EvilMonkey)"
+-- nmap -sS -T4 193.93.22.133 -p 8080-8082 --open --script AXISwebcam-enum --script-args agent="Mozilla/5.0 (compatible),uri=/fd"
+-- nmap -sS -T4 161.81.122.107 -p 8080-8082 --open --script AXISwebcam-enum --script-args uri="/CgiStart/another-index-name.shtml"
+-- nmap -sS -v -T5 -iR 800 -p 8080-8086 --open --script AXISwebcam-enum -D 4.207.247.138,52.123.131.14
 -- @output
 -- PORT     STATE SERVICE VERSION
 -- 8080/tcp open  http    Boa httpd
@@ -89,12 +89,12 @@ elseif ( check_uri.status == 404 ) then --> uri not found
   for i, intable in pairs(uril) do
      local res = http.get(host, port, intable)
      if ( res.status == 200 ) then  --> uri found
-        print("|    ["..res.status.."] "..host.ip..":"..port.number.." => "..uri)
+        print("|    ["..res.status.."] "..host.ip..":"..port.number.." => "..intable)
         uri = intable
         break
      else
        limmit = limmit+1
-       print("|    ["..res.status.."] "..host.ip..":"..port.number.." => "..uri)
+       print("|    ["..res.status.."] "..host.ip..":"..port.number.." => "..intable)
         if ( limmit == 15 ) then --> why 15? Because its the number of URI links present in the {table} list.
            print("|")
            print("|  STATUS: NONE AXIS WEBCAM FOUND")
@@ -107,27 +107,86 @@ elseif ( check_uri.status == 404 ) then --> uri not found
      end
   end
 
+-- Http response codes syntax
 elseif ( check_uri.status == nil ) then
    print("|    [nil] "..host.ip..":"..port.number.." => socket error")
    print("|")
    print("|  STATUS: NONE AXIS WEBCAM FOUND")
-   print("|    ABORT: uri check error code: nil [socket error]")
+   print("|    ABORT: http response code: nil [socket error]")
    print("|      Module Author: r00t-3xp10it & Cleiton Pinheiro")
    print("|_\n")
    do return end
-elseif ( check_uri.status == 400 or check_uri.status == 403 or check_uri.status == 405 or check_uri.status == 500 or check_uri.status == 502 or check_uri.status == 503 or check_uri.status == 307 or check_uri.status == 302 or check_uri.status == 301 ) then
-   print("|    ["..check_uri.status.."] "..host.ip..":"..port.number.." => uri not found")
+elseif ( check_uri.status == 200 ) then
+   print("|    ["..check_uri.status.."] "..host.ip..":"..port.number.." => "..uri)
+elseif ( check_uri.status == 301 ) then
+   print("|    ["..check_uri.status.."] "..host.ip..":"..port.number.." => "..uri)
    print("|")
    print("|  STATUS: NONE AXIS WEBCAM FOUND")
-   print("|    ABORT: uri check error code: "..check_uri.status.." [error]")
+   print("|    ABORT: http response code: "..check_uri.status.." [Moved Permanently]")
+   print("|      Module Author: r00t-3xp10it & Cleiton Pinheiro")
+   print("|_\n")
+   do return end
+elseif ( check_uri.status == 307 ) then
+   print("|    ["..check_uri.status.."] "..host.ip..":"..port.number.." => "..uri)
+   print("|")
+   print("|  STATUS: NONE AXIS WEBCAM FOUND")
+   print("|    ABORT: http response code: "..check_uri.status.." [Temporary Redirect]")
+   print("|      Module Author: r00t-3xp10it & Cleiton Pinheiro")
+   print("|_\n")
+   do return end
+elseif ( check_uri.status == 400 ) then
+   print("|    ["..check_uri.status.."] "..host.ip..":"..port.number.." => "..uri)
+   print("|")
+   print("|  STATUS: NONE AXIS WEBCAM FOUND")
+   print("|    ABORT: http response code: "..check_uri.status.." [Bad Request]")
+   print("|      Module Author: r00t-3xp10it & Cleiton Pinheiro")
+   print("|_\n")
+   do return end
+elseif ( check_uri.status == 403 ) then
+   print("|    ["..check_uri.status.."] "..host.ip..":"..port.number.." => "..uri)
+   print("|")
+   print("|  STATUS: NONE AXIS WEBCAM FOUND")
+   print("|    ABORT: http response code: "..check_uri.status.." [Forbidden]")
+   print("|      Module Author: r00t-3xp10it & Cleiton Pinheiro")
+   print("|_\n")
+   do return end
+elseif ( check_uri.status == 405 ) then
+   print("|    ["..check_uri.status.."] "..host.ip..":"..port.number.." => "..uri)
+   print("|")
+   print("|  STATUS: NONE AXIS WEBCAM FOUND")
+   print("|    ABORT: http response code: "..check_uri.status.." [Method Not Allowed]")
+   print("|      Module Author: r00t-3xp10it & Cleiton Pinheiro")
+   print("|_\n")
+   do return end
+elseif ( check_uri.status == 500 ) then
+   print("|    ["..check_uri.status.."] "..host.ip..":"..port.number.." => "..uri)
+   print("|")
+   print("|  STATUS: NONE AXIS WEBCAM FOUND")
+   print("|    ABORT: http response code: "..check_uri.status.." [Internal Server Error]")
+   print("|      Module Author: r00t-3xp10it & Cleiton Pinheiro")
+   print("|_\n")
+   do return end
+elseif ( check_uri.status == 502 ) then
+   print("|    ["..check_uri.status.."] "..host.ip..":"..port.number.." => "..uri)
+   print("|")
+   print("|  STATUS: NONE AXIS WEBCAM FOUND")
+   print("|    ABORT: http response code: "..check_uri.status.." [Bad Gateway]")
+   print("|      Module Author: r00t-3xp10it & Cleiton Pinheiro")
+   print("|_\n")
+   do return end
+elseif ( check_uri.status == 503 ) then
+   print("|    ["..check_uri.status.."] "..host.ip..":"..port.number.." => "..uri)
+   print("|")
+   print("|  STATUS: NONE AXIS WEBCAM FOUND")
+   print("|    ABORT: http response code: "..check_uri.status.." [Service Unavailable]")
    print("|      Module Author: r00t-3xp10it & Cleiton Pinheiro")
    print("|_\n")
    do return end
 else
-   print("|    ["..check_uri.status.."] "..host.ip..":"..port.number.." => "..uri)
+   print("|    ["..check_uri.status.."] "..host.ip..":"..port.number.." => [error]")
    print("|")
    print("|  STATUS: NONE AXIS WEBCAM FOUND")
-   print("|    ABORT: uri check error code: "..check_uri.status.." [error]")
+   print("|    ABORT: http response code: "..check_uri.status.." [error]")
    print("|      Module Author: r00t-3xp10it & Cleiton Pinheiro")
    print("|_\n")
 end
@@ -213,16 +272,27 @@ local response = http.get(host, port, uri, options)
      "Live view / - AXIS 205 Network Camera version 4.05.1",
      "Live view - AXIS 213 PTZ Network Camera version 4.12"}
 
+     -- error handling
+     if ( title == nil ) then
+       print("|")
+       print("|  STATUS: AXIS WEBCAM FOUND")
+       print("|    TITLE: website doesn't have a title?")
+       print("|      WEBCAM ACCESS: http://"..host.ip..":"..port.number..uri.." ?")
+       print("|      Module Author: r00t-3xp10it & Cleiton Pinheiro")
+       print("|_\n")
+       do return end
+     end
+
      -- Loop Through {table} of HTTP TITLE tags
      for i, intable in pairs(tbl) do
        local validar = string.match(title, intable)
-       if ( validar ~= nil or title == intable ) then  --> uri found + version\vendor retrieved from <title>
+       if ( validar ~= nil or title == intable ) then  --> uri found + version-vendor retrieved from <title>
            print("|\n|   STATUS: AXIS WEBCAM FOUND\n|     TITLE: "..intable.."\n|       WEBCAM ACCESS: http://"..host.ip..":"..port.number..uri.."\n|      Module Author: r00t-3xp10it & Cleiton Pinheiro\n|_\n")
            break
         else
            f = f+1
-           if (f == 68) then   --> uri found - but failed to retrieve version\vendor from <title> matching (tbl) table
-             print("|\n|   STATUS: AXIS WEBCAM FOUND\n|     TITLE: fail to retrieve webcam version\vendor from <title>\n|       WEBCAM ACCESS: http://"..host.ip..":"..port.number..uri.."\n|         Module Author: r00t-3xp10it & Cleiton Pinheiro\n|_\n")
+           if (f == 68) then   --> uri found - but failed to retrieve version-vendor from <title> matching (tbl) table
+             print("|\n|   STATUS: AXIS WEBCAM FOUND\n|     TITLE: fail to retrieve webcam version-vendor from <title>\n|       WEBCAM ACCESS: http://"..host.ip..":"..port.number..uri.."\n|         Module Author: r00t-3xp10it & Cleiton Pinheiro\n|_\n")
              return
            end
         end
