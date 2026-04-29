@@ -115,7 +115,7 @@ elseif ( check_uri.status == 404 ) then
        print("|    ["..res.status.."] "..host.ip..":"..port.number.." => "..intable)
         if ( limmit == 15 ) then --> why 15? Because its the number of URI links present in the {table} list.
            print("|")
-           print("|  STATUS: NONE AXIS URI WEBCAM FOUND")
+           print("|  STATUS: NONE AXIS WEBCAM URI FOUND")
            print("|    REASON: script didnt find any uri matches in our database")
            print("|      HELP: nmap --script AXISwebcam-enum --script-args uri='/another/index-name.shtml'")
            print("|        Module Author: r00t-3xp10it & Cleiton Pinheiro")
@@ -293,7 +293,7 @@ local response = http.get(host, port, uri, options)
      -- nil error handling
      if ( title == nil ) then
        print("|")
-       print("|  STATUS: AXIS MATCHING URI FOUND")
+       print("|  STATUS: AXIS WEBCAM MATCHING URI FOUND")
        print("|    TITLE: webpage doesn't have a <title> tag? [response:nil]")
        print("|      URI ACCESS: http://"..host.ip..":"..port.number..uri.." ")
        print("|        Module Author: r00t-3xp10it & Cleiton Pinheiro")
@@ -310,7 +310,7 @@ local response = http.get(host, port, uri, options)
         else
            titletag = titletag+1
            if (titletag == 68) then   --> uri found - but failed to match version-vendor from <title>
-             print("|\n|   STATUS: AXIS MATCHING URI FOUND\n|     TITLE: failed to match version-vendor from <title>\n|       URI ACCESS: http://"..host.ip..":"..port.number..uri.."\n|         Module Author: r00t-3xp10it & Cleiton Pinheiro\n|_\n")
+             print("|\n|   STATUS: AXIS WEBCAM MATCHING URI FOUND\n|     TITLE: failed to match version-vendor from <title>\n|       URI ACCESS: http://"..host.ip..":"..port.number..uri.."\n|         Module Author: r00t-3xp10it & Cleiton Pinheiro\n|_\n")
              do return end
            end
         end
