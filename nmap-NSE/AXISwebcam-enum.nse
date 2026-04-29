@@ -91,7 +91,7 @@ elseif ( check_uri.status == 404 ) then --> uri not found
   for i, intable in pairs(uril) do
      local res = http.get(host, port, intable)
      if ( res.status == 200 ) then  --> uri found
-        print("|    ["..res.status.."] "..host.ip..":"..port.number.." => "..intable)
+        print("|    ["..res.status.."] "..host.ip..":"..port.number.." => "..intable.." [online]")
         uri = intable
         break
      else
@@ -100,7 +100,7 @@ elseif ( check_uri.status == 404 ) then --> uri not found
         if ( limmit == 15 ) then --> why 15? Because its the number of URI links present in the {table} list.
            print("|")
            print("|  STATUS: NONE AXIS WEBCAM FOUND")
-           print("|    REASON: none uri match found in AXISwebcam DB")
+           print("|    REASON: didnt find any uri match in our database")
            print("|      HELP: nmap --script AXISwebcam-enum --script-args uri='/another/index-name.shtml'")
            print("|        Module Author: r00t-3xp10it & Cleiton Pinheiro")
            print("|_\n")
@@ -111,7 +111,7 @@ elseif ( check_uri.status == 404 ) then --> uri not found
 
 -- Http response codes syntax
 elseif ( check_uri.status == nil ) then
-   print("|    [nil] "..host.ip..":"..port.number.." => socket error")
+   print("|    [nil] "..host.ip..":"..port.number.." [socket error]")
    print("|")
    print("|  STATUS: NONE AXIS WEBCAM FOUND")
    print("|    ABORT: http response code: nil [socket error]")
@@ -119,7 +119,7 @@ elseif ( check_uri.status == nil ) then
    print("|_\n")
    do return end
 elseif ( check_uri.status == 200 ) then
-   print("|    ["..check_uri.status.."] "..host.ip..":"..port.number.." => "..uri)
+   print("|    ["..check_uri.status.."] "..host.ip..":"..port.number.." => "..uri.." [online]")
 elseif ( check_uri.status == 301 ) then
    print("|    ["..check_uri.status.."] "..host.ip..":"..port.number.." => "..uri)
    print("|")
@@ -185,10 +185,10 @@ elseif ( check_uri.status == 503 ) then
    print("|_\n")
    do return end
 else
-   print("|    ["..check_uri.status.."] "..host.ip..":"..port.number.." => [error]")
+   print("|    ["..check_uri.status.."] "..host.ip..":"..port.number.." => [unknown]")
    print("|")
    print("|  STATUS: NONE AXIS WEBCAM FOUND")
-   print("|    ABORT: http response code: "..check_uri.status.." [error]")
+   print("|    ABORT: http response code: "..check_uri.status.." [unknown]")
    print("|      Module Author: r00t-3xp10it & Cleiton Pinheiro")
    print("|_\n")
 end
@@ -277,9 +277,9 @@ local response = http.get(host, port, uri, options)
      -- error handling
      if ( title == nil ) then
        print("|")
-       print("|  STATUS: AXIS MATCHING URL FOUND")
-       print("|    TITLE: webpage doesn't have a <title> [response:nil]")
-       print("|      URL ACCESS: http://"..host.ip..":"..port.number..uri.." ?")
+       print("|  STATUS: AXISwebcsm MATCHING URI FOUND")
+       print("|    TITLE: webpage doesn't have a <title> tag [response:nil]")
+       print("|      URI ACCESS: http://"..host.ip..":"..port.number..uri.." [?]")
        print("|        Module Author: r00t-3xp10it & Cleiton Pinheiro")
        print("|_\n")
        do return end
@@ -294,7 +294,7 @@ local response = http.get(host, port, uri, options)
         else
            f = f+1
            if (f == 68) then   --> uri found - but failed to match version-vendor from <title>
-             print("|\n|   STATUS: AXIS MATCHING URL FOUND\n|     TITLE: fail to extract webcam version-vendor from <title>\n|       URL ACCESS: http://"..host.ip..":"..port.number..uri.."\n|         Module Author: r00t-3xp10it & Cleiton Pinheiro\n|_\n")
+             print("|\n|   STATUS: AXIS MATCHING URL FOUND\n|     TITLE: fail to extract webcam version-vendor from <title>\n|       URI ACCESS: http://"..host.ip..":"..port.number..uri.."\n|         Module Author: r00t-3xp10it & Cleiton Pinheiro\n|_\n")
              do return end
            end
         end
