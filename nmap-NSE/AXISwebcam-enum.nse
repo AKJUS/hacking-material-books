@@ -1,5 +1,5 @@
 ---
--- Nmap NSE AXISwebcam-enum.nse - Version 1.13
+-- Nmap NSE AXISwebcam-enum.nse - Version 1.14
 -- [linux:admin] Copy to: /usr/share/nmap/scripts/AXISwebcam-enum.nse
 -- [linux:admin] Update NSE database: sudo nmap --script-updatedb
 -- [windows:admin] copy to: C:\Program Files (x86)\nmap\scripts\AXISwebcam-enum.nse
@@ -13,8 +13,8 @@ Module Author: r00t-3xp10it & Cleiton Pinheiro
 NSE script to detect if target [ip]:[port][/url] its an AXIS Network Camera transmiting (live).
 This script also allow is users to send a fake User-Agent in the tcp packet <agent=User-Agent-String>
 and also allow is users to input a diferent uri= [/url] link to be scan, IF none uri= value its inputed, then
-this script tests a List of AXIS default [/url's] available in our database to brute force the HTML TITLE tag.
-'Remark: This nse script will NOT execute againts webcams found that require authentication logins'
+this script tests a List of AXIS default [/url's] available in our database to brute force the HTML TITLE tag
+Remark: This nse script does not brute force any authentication login of webcams found (just for enumeration)
 
 Some Syntax examples:
 nmap --script-help AXISwebcam-enum.nse
@@ -43,7 +43,7 @@ nmap -sS -v -T5 -iR 800 -p 8080-8082 --open --script AXISwebcam-enum -D 4.207.24
 -- |   STATUS: AXIS WEBCAM FOUND
 -- |     TITLE: Live view  - AXIS 211 Network Camera version 4.11
 -- |       WEBCAM ACCESS: http://216.99.115.136:8080/view/index.shtml
--- |       Module Author: r00t-3xp10it & Cleiton Pinheiro
+-- |         Module Author: r00t-3xp10it & Cleiton Pinheiro
 -- |_
 -- @args payload.uri the path name to search. Default: /indexFrame.shtml
 -- @args payload.agent User-agent to send in request - Default: iPhone,safari
@@ -60,7 +60,7 @@ local string = require "string"
 local http = require "http"
 
 -- define loop limmit(s)
-f = 0
+titletag = 0
 limmit = 0
 
 portrule = shortport.port_or_service({80, 81, 82, 83, 84, 85, 86, 92, 8080, 8081, 8082, 8083, 55752, 55754}, "http, http-proxy", "tcp", "open")
@@ -76,21 +76,21 @@ local check_uri = http.get(host, port, uri)
 if ( check_uri.status == 401 ) then   --> uri auth login found
   print("|    ["..check_uri.status.."] => http://"..host.ip..":"..port.number..uri.." (AUTH LOGIN FOUND)")
   print("|")
-  print("|  STATUS: AXIS WEBCAM FOUND")
+  print("|  STATUS: POSSIBLE AXIS WEBCAM FOUND")
   print("|    WEBCAM ACCESS: http://"..host.ip..":"..port.number..uri.." [LOGIN]")
   print("|      ABORT SCANS: webcam access requires authentication login")
   print("|        Module Author: r00t-3xp10it & Cleiton Pinheiro")
   print("|_\n")
   return
 
-elseif ( check_uri.status == 404 ) then --> uri not found
+elseif ( check_uri.status == 404 ) then
   print("|    ["..check_uri.status.."] "..host.ip..":"..port.number.." => "..uri)
   uril = {"/webcam_code.php", "/view/view.shtml", "/indexFrame.shtml", "/view/index.shtml", "/view/index2.shtml", "/webcam/view.shtml", "/ViewerFrame.shtml", "/RecordFrame?Mode=", "/MultiCameraFrame?Mode=", "/view/viewer_index.shtml", "/visitor_center/i-cam.html", "/index.shtml", "/stadscam/Live95j.asp", "/sub06/cam.php", "/CgiStart"}
 
   -- loop Through {table} of uri url's
   for i, intable in pairs(uril) do
      local res = http.get(host, port, intable)
-     if ( res.status == 200 ) then  --> uri found
+     if ( res.status == 200 ) then
         print("|    ["..res.status.."] "..host.ip..":"..port.number.." => "..intable.." [online]")
         uri = intable
         break
@@ -99,8 +99,8 @@ elseif ( check_uri.status == 404 ) then --> uri not found
        print("|    ["..res.status.."] "..host.ip..":"..port.number.." => "..intable)
         if ( limmit == 15 ) then --> why 15? Because its the number of URI links present in the {table} list.
            print("|")
-           print("|  STATUS: NONE AXIS WEBCAM FOUND")
-           print("|    REASON: didnt find any uri match in our database")
+           print("|  STATUS: NONE AXIS URI WEBCAM FOUND")
+           print("|    REASON: script didnt find any uri matches in our database")
            print("|      HELP: nmap --script AXISwebcam-enum --script-args uri='/another/index-name.shtml'")
            print("|        Module Author: r00t-3xp10it & Cleiton Pinheiro")
            print("|_\n")
@@ -111,15 +111,15 @@ elseif ( check_uri.status == 404 ) then --> uri not found
 
 -- Http response codes syntax
 elseif ( check_uri.status == nil ) then
-   print("|    [nil] "..host.ip..":"..port.number.." [socket error]")
+   print("|    [NIL] "..host.ip..":"..port.number.." => [socket error]")
    print("|")
    print("|  STATUS: NONE AXIS WEBCAM FOUND")
-   print("|    ABORT: http response code: nil [socket error]")
+   print("|    ABORT: http response code: NIL [socket error]")
    print("|      Module Author: r00t-3xp10it & Cleiton Pinheiro")
    print("|_\n")
    do return end
 elseif ( check_uri.status == 200 ) then
-   print("|    ["..check_uri.status.."] "..host.ip..":"..port.number.." => "..uri.." [online]")
+   print("|    ["..check_uri.status.."] "..host.ip..":"..port.number.." => "..uri)
 elseif ( check_uri.status == 301 ) then
    print("|    ["..check_uri.status.."] "..host.ip..":"..port.number.." => "..uri)
    print("|")
@@ -274,12 +274,12 @@ local response = http.get(host, port, uri, options)
      "Live view / - AXIS 205 Network Camera version 4.05.1",
      "Live view - AXIS 213 PTZ Network Camera version 4.12"}
 
-     -- error handling
+     -- nil error handling
      if ( title == nil ) then
        print("|")
-       print("|  STATUS: AXISwebcsm MATCHING URI FOUND")
-       print("|    TITLE: webpage doesn't have a <title> tag [response:nil]")
-       print("|      URI ACCESS: http://"..host.ip..":"..port.number..uri.." [?]")
+       print("|  STATUS: AXIS MATCHING URI FOUND")
+       print("|    TITLE: webpage doesn't have a <title> tag? [response:nil]")
+       print("|      URI ACCESS: http://"..host.ip..":"..port.number..uri.." ")
        print("|        Module Author: r00t-3xp10it & Cleiton Pinheiro")
        print("|_\n")
        do return end
@@ -292,9 +292,9 @@ local response = http.get(host, port, uri, options)
            print("|\n|   STATUS: AXIS WEBCAM FOUND\n|     TITLE: "..intable.."\n|       WEBCAM ACCESS: http://"..host.ip..":"..port.number..uri.."\n|         Module Author: r00t-3xp10it & Cleiton Pinheiro\n|_\n")
            break
         else
-           f = f+1
-           if (f == 68) then   --> uri found - but failed to match version-vendor from <title>
-             print("|\n|   STATUS: AXIS MATCHING URL FOUND\n|     TITLE: fail to extract webcam version-vendor from <title>\n|       URI ACCESS: http://"..host.ip..":"..port.number..uri.."\n|         Module Author: r00t-3xp10it & Cleiton Pinheiro\n|_\n")
+           titletag = titletag+1
+           if (titletag == 68) then   --> uri found - but failed to match version-vendor from <title>
+             print("|\n|   STATUS: AXIS MATCHING URI FOUND\n|     TITLE: failed to match version-vendor from <title>\n|       URI ACCESS: http://"..host.ip..":"..port.number..uri.."\n|         Module Author: r00t-3xp10it & Cleiton Pinheiro\n|_\n")
              do return end
            end
         end
