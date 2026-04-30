@@ -1,5 +1,5 @@
 ---
--- Nmap NSE AXISwebcam-enum.nse - Version 1.14
+-- Nmap NSE AXISwebcam-enum.nse - Version 1.15
 -- [linux:admin] Copy to: /usr/share/nmap/scripts/AXISwebcam-enum.nse
 -- [linux:admin] Update NSE database: sudo nmap --script-updatedb
 -- [windows:admin] copy to: C:\Program Files (x86)\nmap\scripts\AXISwebcam-enum.nse
@@ -14,22 +14,22 @@ NSE script to detect if target [ip]:[port][/url] its an AXIS Network Camera tran
 This script also allow is users to send a fake User-Agent in the tcp packet <agent=User-Agent-String>
 and also allow is users to input a diferent uri= [/url] link to be scan, IF none uri= value its inputed, then
 this script tests a List of AXIS default [/url's] available in our database to brute force the HTML TITLE tag
-Remark: This nse script does not brute force any authentication login of webcams found (just for enumeration)
+Remark: 'This nse script does not brute force any authentication login of webcams found (only enumeration)'
 
 Syntax examples
 nmap --script-help AXISwebcam-enum.nse
 nmap -sS -T4 222.155.98.15 -p 8081 --open --script AXISwebcam-enum
-nmap -sV -T3 183.95.71.129 -p 8081 --open --script AXISwebcam-enum 
+nmap -sV -T3 183.95.71.129 -p 8081 --open --script AXISwebcam-enum --script-args logfile="C:\Users\Nmap_scan.txt"
 nmap -sS -T4 192.46.209.62 -p 8082 --script AXISwebcam-enum --script-args agent="Mozilla/5.0 (compatible; EvilMonkey)"
 nmap -sS -T4 193.93.22.133 -p 8080 --open --script AXISwebcam-enum --script-args agent="Mozilla/5.0 (compatible),uri=/fd"
-nmap -sS -T3 161.81.122.107 -p 8080-8082 --open --script AXISwebcam-enum --script-args uri="/CgiStart/another-index-name.shtml"
+nmap -sS -T4 161.81.122.107 -p 8080-8082 --open --script AXISwebcam-enum --script-args uri="/CgiStart/loadingpage=cam.shtml"
 nmap -sS -v -T5 -iR 800 -p 8080-8082 --open --script AXISwebcam-enum -D 4.207.247.138,52.123.131.14
 
 Outputs
 |AXISwebcam-enum:
 |  Brute force AXIS network camera URL:
-|    [404] 216.99.115.136:8080 => /webcam_code.php
-|    [404] 216.99.115.136:8080 => /webcam/view.shtml
+|    [404] 216.99.115.136:8080 => /axis-cgi/media.cgi
+|    [404] 216.99.115.136:8080 => /axis-media/media.amp
 |    [200] 216.99.115.136:8080 => /view/index.shtml
 |
 |  STATUS: AXIS WEBCAM FOUND
@@ -38,22 +38,27 @@ Outputs
 |        Module Author: r00t-3xp10it & Cleiton Pinheiro
 |_
 
+Version 1.15 update:
+[1] @args.logfile="C:\Users\Nmap_scan.txt" --> creates or appends scan data to existing logfile.txt
+[2] URI's added: /img/video.asf, /axis-cgi/mjpg/video.cgi, /axis-media/media.amp, /axis-cgi/media.cgi
+[3] stdnse.sleep(1.5) --> added sleep() xx seconds function to AXISwebcam-enum sourcecode
+
 ]]
 
 ---
 -- @usage
 -- nmap --script-help AXISwebcam-enum.nse
 -- nmap -sS -T4 222.155.98.15 -p 8081 --open --script AXISwebcam-enum
--- nmap -sV -T3 183.95.71.129 -p 8081 --open --script AXISwebcam-enum 
+-- nmap -sV -T3 183.95.71.129 -p 8081 --open --script AXISwebcam-enum --script-args logfile="C:\Users\Nmap_scan.txt"
 -- nmap -sS -T4 192.46.209.62 -p 8082 --script AXISwebcam-enum --script-args agent="Mozilla/5.0 (compatible; EvilMonkey)"
 -- nmap -sS -T4 193.93.22.133 -p 8080 --open --script AXISwebcam-enum --script-args agent="Mozilla/5.0 (compatible),uri=/fd"
--- nmap -sS -T3 161.81.122.107 -p 8080-8082 --open --script AXISwebcam-enum --script-args uri="/CgiStart/another-index-name.shtml"
+-- nmap -sS -T4 161.81.122.107 -p 8080-8082 --open --script AXISwebcam-enum --script-args uri="/CgiStart/loadingpage=cam.shtml"
 -- nmap -sS -v -T5 -iR 800 -p 8080-8082 --open --script AXISwebcam-enum -D 4.207.247.138,52.123.131.14
 -- @output
 -- |AXISwebcam-enum:
 -- |  Brute force AXIS network camera URL:
--- |    [404] 216.99.115.136:8080 => /webcam_code.php
--- |    [404] 216.99.115.136:8080 => /webcam/view.shtml
+-- |    [404] 216.99.115.136:8080 => /axis-cgi/media.cgi
+-- |    [404] 216.99.115.136:8080 => /axis-media/media.amp
 -- |    [200] 216.99.115.136:8080 => /view/index.shtml
 -- |
 -- |  STATUS: AXIS WEBCAM FOUND
@@ -61,16 +66,17 @@ Outputs
 -- |      WEBCAM ACCESS: http://216.99.115.136:8080/view/index.shtml
 -- |        Module Author: r00t-3xp10it & Cleiton Pinheiro
 -- |_
--- @args payload.uri the path name to search. Default: /indexFrame.shtml
--- @args payload.agent User-agent to send in request - Default: iPhone,safari
----
+-- @args payload.uri the path name to search. default: /indexFrame.shtml
+-- @args payload.agent User-agent to send in request - default: iPhone,safari
+-- @args payload.logfile logfile.txt to create or append data - default: false
+----
 
 author = "r00t-3xp10it & Cleiton Pinheiro"
 license = "Same as Nmap--See http://nmap.org/book/man-legal.html"
 categories = {"safe", "discovery"}
 
-
-local stdnse = require ('stdnse')
+-- requires (lua librarys)
+local stdnse = require "stdnse"
 local shortport = require "shortport"
 local string = require "string"
 local http = require "http"
@@ -82,238 +88,467 @@ limmit = 0
 portrule = shortport.port_or_service({80, 81, 82, 83, 84, 85, 86, 92, 8080, 8081, 8082, 8083, 55752, 55754}, "http, http-proxy", "tcp", "open")
 
 action = function(host, port)
-print("|AXISwebcam-enum:")
-print("|  Brute force AXIS network camera URL:")
+   print("|AXISwebcam-enum:")
+   print("|  Brute force AXIS network camera URL:")
 
-uri = stdnse.get_script_args(SCRIPT_NAME..".uri") or "/indexFrame.shtml"
+   -- nse script @arguments declaration
+   uri = stdnse.get_script_args(SCRIPT_NAME..".uri") or "/indexFrame.shtml"
+   logfile = stdnse.get_script_args(SCRIPT_NAME..".logfile") or "false"
 
--- Check User Input uri response
-local check_uri = http.get(host, port, uri)
-if ( check_uri.status == 401 ) then   --> uri auth login found
-  print("|    ["..check_uri.status.."] => http://"..host.ip..":"..port.number..uri.." (AUTH LOGIN FOUND)")
-  print("|")
-  print("|  STATUS: POSSIBLE AXIS WEBCAM FOUND")
-  print("|    WEBCAM ACCESS: http://"..host.ip..":"..port.number..uri.." [LOGIN]")
-  print("|      ABORT SCANS: webcam access requires authentication login")
-  print("|        Module Author: r00t-3xp10it & Cleiton Pinheiro")
-  print("|_\n")
-  return
+   -- Check User Input uri response
+   local check_uri = http.get(host, port, uri)
+   if ( check_uri.status == 401 ) then   --> uri auth login found
+      print("|    ["..check_uri.status.."] => http://"..host.ip..":"..port.number..uri.." (AUTH LOGIN FOUND)")
+      print("|")
+      print("|  STATUS: POSSIBLE AXIS WEBCAM FOUND")
+      print("|    WEBCAM ACCESS: http://"..host.ip..":"..port.number..uri.." [LOGIN]")
+      print("|      ABORT SCANS: webcam access requires authentication login")
+      print("|        Module Author: r00t-3xp10it & Cleiton Pinheiro")
+      print("|_\n")
 
-elseif ( check_uri.status == 404 ) then
-  print("|    ["..check_uri.status.."] "..host.ip..":"..port.number.." => "..uri)
-  uril = {"/webcam_code.php", "/view/view.shtml", "/indexFrame.shtml", "/view/index.shtml", "/view/index2.shtml", "/webcam/view.shtml", "/ViewerFrame.shtml", "/RecordFrame?Mode=", "/MultiCameraFrame?Mode=", "/view/viewer_index.shtml", "/visitor_center/i-cam.html", "/index.shtml", "/stadscam/Live95j.asp", "/sub06/cam.php", "/CgiStart"}
+      -- append data to logfile
+      if ( logfile ~= "false" ) then
+         local file = io.open(logfile, "a")
+         file:write("|AXISwebcam-enum:\n")
+         file:write("|  Brute force AXIS network camera URL:\n")
+         file:write("|    ["..check_uri.status.."] => http://"..host.ip..":"..port.number..uri.." (AUTH LOGIN FOUND)\n")
+         file:write("|\n")
+         file:write("|  STATUS: POSSIBLE AXIS WEBCAM FOUND\n")
+         file:write("|    WEBCAM ACCESS: http://"..host.ip..":"..port.number..uri.." [LOGIN]\n")
+         file:write("|      ABORT SCANS: webcam access requires authentication login\n")
+         file:write("|        Module Author: r00t-3xp10it & Cleiton Pinheiro\n")
+         file:write("|_\n")
+         file:close()
+      end
+   return
 
-  -- loop Through {table} of uri url's
-  for i, intable in pairs(uril) do
-     local res = http.get(host, port, intable)
-     if ( res.status == 200 ) then
-        print("|    ["..res.status.."] "..host.ip..":"..port.number.." => "..intable.." [online]")
-        uri = intable
-        break
-     else
-       limmit = limmit+1
-       print("|    ["..res.status.."] "..host.ip..":"..port.number.." => "..intable)
-        if ( limmit == 15 ) then --> why 15? Because its the number of URI links present in the {table} list.
-           print("|")
-           print("|  STATUS: NONE AXIS WEBCAM URI FOUND")
-           print("|    REASON: script didnt find any uri matches in our database")
-           print("|      HELP: nmap --script AXISwebcam-enum --script-args uri='/another/index-name.shtml'")
-           print("|        Module Author: r00t-3xp10it & Cleiton Pinheiro")
-           print("|_\n")
-           return
-       end
-     end
-  end
+   elseif ( check_uri.status == 404 ) then
+      print("|    ["..check_uri.status.."] "..host.ip..":"..port.number.." => "..uri)
+      -- Source: https://camera-sdk.com/p_6646-how-to-connect-to-a-axis-camera.html
+      uril = {"/axis-cgi/media.cgi", "/axis-media/media.amp", "/axis-cgi/mjpg/video.cgi", "/webcam_code.php", "/view/view.shtml", "/indexFrame.shtml", "/view/index.shtml", "/view/index2.shtml", "/webcam/view.shtml", "/ViewerFrame.shtml", "/RecordFrame?Mode=", "/MultiCameraFrame?Mode=", "/view/viewer_index.shtml", "/visitor_center/i-cam.html", "/index.shtml", "/stadscam/Live95j.asp", "/sub06/cam.php", "/CgiStart", "/img/video.asf"}
 
--- Http response codes syntax
-elseif ( check_uri.status == nil ) then
-   print("|    [NIL] "..host.ip..":"..port.number.." => [socket error]")
-   print("|")
-   print("|  STATUS: NONE AXIS WEBCAM FOUND")
-   print("|    ABORT: http response code: NIL [socket error]")
-   print("|      Module Author: r00t-3xp10it & Cleiton Pinheiro")
-   print("|_\n")
-   do return end
-elseif ( check_uri.status == 200 ) then
-   print("|    ["..check_uri.status.."] "..host.ip..":"..port.number.." => "..uri)
-elseif ( check_uri.status == 301 ) then
-   print("|    ["..check_uri.status.."] "..host.ip..":"..port.number.." => "..uri)
-   print("|")
-   print("|  STATUS: NONE AXIS WEBCAM FOUND")
-   print("|    ABORT: http response code: "..check_uri.status.." [Moved Permanently]")
-   print("|      Module Author: r00t-3xp10it & Cleiton Pinheiro")
-   print("|_\n")
-   do return end
-elseif ( check_uri.status == 307 ) then
-   print("|    ["..check_uri.status.."] "..host.ip..":"..port.number.." => "..uri)
-   print("|")
-   print("|  STATUS: NONE AXIS WEBCAM FOUND")
-   print("|    ABORT: http response code: "..check_uri.status.." [Temporary Redirect]")
-   print("|      Module Author: r00t-3xp10it & Cleiton Pinheiro")
-   print("|_\n")
-   do return end
-elseif ( check_uri.status == 400 ) then
-   print("|    ["..check_uri.status.."] "..host.ip..":"..port.number.." => "..uri)
-   print("|")
-   print("|  STATUS: NONE AXIS WEBCAM FOUND")
-   print("|    ABORT: http response code: "..check_uri.status.." [Bad Request]")
-   print("|      Module Author: r00t-3xp10it & Cleiton Pinheiro")
-   print("|_\n")
-   do return end
-elseif ( check_uri.status == 403 ) then
-   print("|    ["..check_uri.status.."] "..host.ip..":"..port.number.." => "..uri)
-   print("|")
-   print("|  STATUS: NONE AXIS WEBCAM FOUND")
-   print("|    ABORT: http response code: "..check_uri.status.." [Forbidden]")
-   print("|      Module Author: r00t-3xp10it & Cleiton Pinheiro")
-   print("|_\n")
-   do return end
-elseif ( check_uri.status == 405 ) then
-   print("|    ["..check_uri.status.."] "..host.ip..":"..port.number.." => "..uri)
-   print("|")
-   print("|  STATUS: NONE AXIS WEBCAM FOUND")
-   print("|    ABORT: http response code: "..check_uri.status.." [Method Not Allowed]")
-   print("|      Module Author: r00t-3xp10it & Cleiton Pinheiro")
-   print("|_\n")
-   do return end
-elseif ( check_uri.status == 500 ) then
-   print("|    ["..check_uri.status.."] "..host.ip..":"..port.number.." => "..uri)
-   print("|")
-   print("|  STATUS: NONE AXIS WEBCAM FOUND")
-   print("|    ABORT: http response code: "..check_uri.status.." [Internal Server Error]")
-   print("|      Module Author: r00t-3xp10it & Cleiton Pinheiro")
-   print("|_\n")
-   do return end
-elseif ( check_uri.status == 502 ) then
-   print("|    ["..check_uri.status.."] "..host.ip..":"..port.number.." => "..uri)
-   print("|")
-   print("|  STATUS: NONE AXIS WEBCAM FOUND")
-   print("|    ABORT: http response code: "..check_uri.status.." [Bad Gateway]")
-   print("|      Module Author: r00t-3xp10it & Cleiton Pinheiro")
-   print("|_\n")
-   do return end
-elseif ( check_uri.status == 503 ) then
-   print("|    ["..check_uri.status.."] "..host.ip..":"..port.number.." => "..uri)
-   print("|")
-   print("|  STATUS: NONE AXIS WEBCAM FOUND")
-   print("|    ABORT: http response code: "..check_uri.status.." [Service Unavailable]")
-   print("|      Module Author: r00t-3xp10it & Cleiton Pinheiro")
-   print("|_\n")
-   do return end
-else
-   print("|    ["..check_uri.status.."] "..host.ip..":"..port.number.." => [unknown]")
-   print("|")
-   print("|  STATUS: NONE AXIS WEBCAM FOUND")
-   print("|    ABORT: http response code: "..check_uri.status.." [unknown]")
-   print("|      Module Author: r00t-3xp10it & Cleiton Pinheiro")
-   print("|_\n")
-end
+      -- loop Through {table} of uri url's
+      for i, intable in pairs(uril) do
+         local res = http.get(host, port, intable)
+         if ( res.status == 200 ) then
+            print("|    ["..res.status.."] "..host.ip..":"..port.number.." => "..intable.." [online]")
+            uri = intable
+            break
+         else
+            limmit = limmit+1
+            print("|    ["..res.status.."] "..host.ip..":"..port.number.." => "..intable)
+            if ( limmit == 19 ) then --> why 19? Because its the number of URI links present in the {uril} list.
+               print("|")
+               print("|  STATUS: NONE AXIS WEBCAM URI FOUND")
+               print("|    REASON: script didnt find any uri matches in our database")
+               print("|      HELP: nmap --script AXISwebcam-enum --script-args uri='/another/index-name.shtml'")
+               print("|        Module Author: r00t-3xp10it & Cleiton Pinheiro")
+               print("|_\n")
 
-local options = {header={}}
--- Manipulate TCP packet 'header' with false information about attacker :D
-options['header']['User-Agent'] = stdnse.get_script_args(SCRIPT_NAME..".agent") or "Mozilla/5.0 (iPhone; CPU iPhone OS 6_1_4 like Mac OS X) AppleWebKit/536.26 (KHTML, like Gecko) Version/6.0 Mobile/10B350 Safari/8536.25"
-options['header']['Accept-Language'] = "en-GB,en;q=0.8,sv"
-options['header']['Cache-Control'] = "no-store"
+               -- append data to logfile
+               if ( logfile ~= "false" ) then
+                   local file = io.open(logfile, "a")
+                   file:write("|AXISwebcam-enum:\n")
+                   file:write("|  Brute force AXIS network camera URL:\n")
+                   file:write("|    ["..res.status.."] "..host.ip..":"..port.number.." => "..intable.."\n")
+                   file:write("|\n")
+                   file:write("|  STATUS: NONE AXIS WEBCAM URI FOUND\n")
+                   file:write("|    REASON: script didn't find any uri matches in our database\n")
+                   file:write("|      HELP: nmap --script AXISwebcam-enum --script-args uri='/another/index-name.shtml'\n")
+                   file:write("|        Module Author: r00t-3xp10it & Cleiton Pinheiro\n")
+                   file:write("|_\n")
+                   file:close()
+               end
+               return
+            end
+         end
+      end
 
--- Read response from target (http.get)
-local response = http.get(host, port, uri, options)
-  if ( response.status == 200 ) then
-     local title = string.match(response.body, "<[Tt][Ii][Tt][Ll][Ee][^>]*>([^<]*)</[Tt][Ii][Tt][Ll][Ee]>")
+   -- diferent Http response codes
+   elseif ( check_uri.status == nil ) then
+      print("|    [NIL] "..host.ip..":"..port.number.." => [socket error]")
+      print("|")
+      print("|  STATUS: NONE AXIS WEBCAM FOUND")
+      print("|    ABORT: http response code: NIL [socket error]")
+      print("|      Module Author: r00t-3xp10it & Cleiton Pinheiro")
+      print("|_\n")
 
-     -- List {table} of HTTP TITLE tags
-     tbl = {"TL-WR740N",
-     "AXIS Video Server",
-     "Live View / - AXIS",
-     "AXIS 2400 Video Server",
-     "Network Camera TUCCAM1",
-     "AXIS 243Q(2) Blade 4.45",
-     "Network Camera Capitanía",
-     "AXIS P5514 Network Camera",
-     "AXIS Q1615 Network Camera",
-     "AXIS P1357 Network Camera",
-     "AXIS M5013 Network Camera",
-     "AXIS M3026 Network Camera",
-     "AXIS M1124 Network Camera",
-     "Network Camera Hwy285/cr43",
-     "Login - Residential Gateway",
-     "Axis 2420 Video Server 2.32",
-     "AXIS Q6045-E Network Camera",
-     "AXIS Q6044-E Network Camera",
-     "Network Camera NetworkCamera",
-     "AXIS P1435-LE Network Camera",
-     "AXIS P1425-LE Network Camera",
-     "Axis 2120 Network Camera 2.34",
-     "Axis 2420 Network Camera 2.30",
-     "Axis 2420 Network Camera 2.31",
-     "Axis 2420 Network Camera 2.32",
-     "AXIS P1365 Mk II Network Camera",
-     "AXIS F34 Network Camera 6.50.2.3",
-     "AXIS 214 PTZ Network Camera 4.49",
-     "Axis 2130 PTZ Network Camera 2.30",
-     "Axis 2130 PTZ Network Camera 2.31",
-     "Axis 2130 PTZ Network Camera 2.32",
-     "AXIS P5635-E Mk II Network Camera",
-     "AXIS Q7401 Video Encoder 5.51.5.1",
-     "AXIS Q6045-E Mk II Network Camera",
-     "AXIS P1353 Network Camera 6.50.2.3",
-     "AXIS M3004 Network Camera 5.51.5.1",
-     "AXIS M1145-L Network Camera 6.50.3",
-     "AXIS M2025-LE Network Camera 8.50.1",
-     "Live view / - AXIS 205 version 4.03",
-     "Live view  - AXIS 240Q Video Server",
-     "Live view  - AXIS 221 Network Camera",
-     "Live view  - AXIS 211 Network Camera",
-     "AXIS Q1765-LE Network Camera 5.55.2.3",
-     "Live view  - AXIS P1354 Network Camera",
-     "Live view  - AXIS P1344 Network Camera",
-     "Live view  - AXIS M1114 Network Camera",
-     "Live view  - AXIS M1103 Network Camera",
-     "Live view  - AXIS M1025 Network Camera",
-     "AXIS P1354 Fixed Network Camera 6.50.3",
-     "AXIS P1354 Fixed Network Camera 5.60.1",
-     "AXIS V5914 PTZ Network Camera 5.75.1.11",
-     "Live view - AXIS P5534-E Network Camera",
-     "Live view  - AXIS 215 PTZ Network Camera",
-     "Live view  - AXIS 214 PTZ Network Camera",
-     "Live view  - AXIS 213 PTZ Network Camera",
-     "AXIS P5534 PTZ Dome Network Camera 5.51.5",
-     "AXIS Q6034-E PTZ Dome Network Camera 5.41.4",
-     "AXIS P3354 Fixed Dome Network Camera 5.40.17",
-     "AXIS Q6042-E PTZ Dome Network Camera 5.70.1.4",
-     "AXIS Q3505 Fixed Dome Network Camera 6.30.1.1",
-     "Live view - AXIS 206M Network Camera version 4.11",
-     "Live view  - AXIS 211 Network Camera version 4.11",
-     "Live view  - AXIS 211 Network Camera version 4.10",
-     "Live view / - AXIS 205 Network Camera version 4.04",
-     "Live view / - AXIS 205 Network Camera version 4.05",
-     "AXIS P5635-E Mk II PTZ Dome Network Camera 8.40.2.2",
-     "Live view / - AXIS 205 Network Camera version 4.05.1",
-     "Live view - AXIS 213 PTZ Network Camera version 4.12"}
+      -- append data to logfile
+      if ( logfile ~= "false" ) then
+          local file = io.open(logfile, "a")
+          file:write("|AXISwebcam-enum:\n")
+          file:write("|  Brute force AXIS network camera URL:\n")
+          file:write("|    [NIL] "..host.ip..":"..port.number.." => [socket error]\n")
+          file:write("|\n")
+          file:write("|  STATUS: NONE AXIS WEBCAM FOUND\n")
+          file:write("|    ABORT: http response code: NIL [socket error]\n")
+          file:write("|      Module Author: r00t-3xp10it & Cleiton Pinheiro\n")
+          file:write("|_\n")
+          file:close()
+      end
 
-     -- nil error handling
-     if ( title == nil ) then
-       print("|")
-       print("|  STATUS: AXIS WEBCAM MATCHING URI FOUND")
-       print("|    TITLE: webpage doesn't have a <title> tag? [response:nil]")
-       print("|      URI ACCESS: http://"..host.ip..":"..port.number..uri.." ")
-       print("|        Module Author: r00t-3xp10it & Cleiton Pinheiro")
-       print("|_\n")
-       do return end
-     end
+     do return end
+   elseif ( check_uri.status == 200 ) then
+      -- we have a possitive http response code [200 = ok]
+      print("|    ["..check_uri.status.."] "..host.ip..":"..port.number.." => "..uri)
+   elseif ( check_uri.status == 301 ) then
+      print("|    ["..check_uri.status.."] "..host.ip..":"..port.number.." => "..uri)
+      print("|")
+      print("|  STATUS: NONE AXIS WEBCAM FOUND")
+      print("|    ABORT: http response code: "..check_uri.status.." [Moved Permanently]")
+      print("|      Module Author: r00t-3xp10it & Cleiton Pinheiro")
+      print("|_\n")
 
-     -- Loop Through {table} of HTTP TITLE tags
-     for i, intable in pairs(tbl) do
-       local validar = string.match(title, intable)
-       if ( validar ~= nil or title == intable ) then     --> uri found + version-vendor retrieved from <title>
-           print("|\n|   STATUS: AXIS WEBCAM FOUND\n|     TITLE: "..intable.."\n|       WEBCAM ACCESS: http://"..host.ip..":"..port.number..uri.."\n|         Module Author: r00t-3xp10it & Cleiton Pinheiro\n|_\n")
+      -- append data to logfile
+      if ( logfile ~= "false" ) then
+          local file = io.open(logfile, "a")
+          file:write("|AXISwebcam-enum:\n")
+          file:write("|  Brute force AXIS network camera URL:\n")
+          file:write("|    ["..check_uri.status.."] "..host.ip..":"..port.number.." => "..uri.."\n")
+          file:write("|\n")
+          file:write("|  STATUS: NONE AXIS WEBCAM FOUND\n")
+          file:write("|    ABORT: http response code: "..check_uri.status.." [Moved Permanently]\n")
+          file:write("|      Module Author: r00t-3xp10it & Cleiton Pinheiro\n")
+          file:write("|_\n")
+          file:close()
+      end
+
+     do return end
+   elseif ( check_uri.status == 307 ) then
+      print("|    ["..check_uri.status.."] "..host.ip..":"..port.number.." => "..uri)
+      print("|")
+      print("|  STATUS: NONE AXIS WEBCAM FOUND")
+      print("|    ABORT: http response code: "..check_uri.status.." [Temporary Redirect]")
+      print("|      Module Author: r00t-3xp10it & Cleiton Pinheiro")
+      print("|_\n")
+
+      -- append data to logfile
+      if ( logfile ~= "false" ) then
+          local file = io.open(logfile, "a")
+          file:write("|AXISwebcam-enum:\n")
+          file:write("|  Brute force AXIS network camera URL:\n")
+          file:write("|    ["..check_uri.status.."] "..host.ip..":"..port.number.." => "..uri.."\n")
+          file:write("|\n")
+          file:write("|  STATUS: NONE AXIS WEBCAM FOUND\n")
+          file:write("|    ABORT: http response code: "..check_uri.status.." [Temporary Redirect]\n")
+          file:write("|      Module Author: r00t-3xp10it & Cleiton Pinheiro\n")
+          file:write("|_\n")
+          file:close()
+      end
+
+     do return end
+   elseif ( check_uri.status == 400 ) then
+      print("|    ["..check_uri.status.."] "..host.ip..":"..port.number.." => "..uri)
+      print("|")
+      print("|  STATUS: NONE AXIS WEBCAM FOUND")
+      print("|    ABORT: http response code: "..check_uri.status.." [Bad Request]")
+      print("|      Module Author: r00t-3xp10it & Cleiton Pinheiro")
+      print("|_\n")
+
+      -- append data to logfile
+      if ( logfile ~= "false" ) then
+          local file = io.open(logfile, "a")
+          file:write("|AXISwebcam-enum:\n")
+          file:write("|  Brute force AXIS network camera URL:\n")
+          file:write("|    ["..check_uri.status.."] "..host.ip..":"..port.number.." => "..uri.."\n")
+          file:write("|\n")
+          file:write("|  STATUS: NONE AXIS WEBCAM FOUND\n")
+          file:write("|    WEBCAM ACCESS: http://"..host.ip..":"..port.number..uri.." [LOGIN]\n")
+          file:write("|    ABORT: http response code: "..check_uri.status.." [Bad Request]\n")
+          file:write("|        Module Author: r00t-3xp10it & Cleiton Pinheiro\n")
+          file:write("|_\n")
+          file:close()
+      end
+
+      do return end
+   elseif ( check_uri.status == 403 ) then
+      print("|    ["..check_uri.status.."] "..host.ip..":"..port.number.." => "..uri)
+      print("|")
+      print("|  STATUS: NONE AXIS WEBCAM FOUND")
+      print("|    ABORT: http response code: "..check_uri.status.." [Forbidden]")
+      print("|      Module Author: r00t-3xp10it & Cleiton Pinheiro")
+      print("|_\n")
+
+      -- append data to logfile
+      if ( logfile ~= "false" ) then
+          local file = io.open(logfile, "a")
+          file:write("|AXISwebcam-enum:\n")
+          file:write("|  Brute force AXIS network camera URL:\n")
+          file:write("|    ["..check_uri.status.."] "..host.ip..":"..port.number.." => "..uri.."\n")
+          file:write("|\n")
+          file:write("|  STATUS: NONE AXIS WEBCAM FOUND\n")
+          file:write("|    ABORT: http response code: "..check_uri.status.." [Forbidden]\n")
+          file:write("|        Module Author: r00t-3xp10it & Cleiton Pinheiro\n")
+          file:write("|_\n")
+          file:close()
+      end
+
+     do return end
+   elseif ( check_uri.status == 405 ) then
+      print("|    ["..check_uri.status.."] "..host.ip..":"..port.number.." => "..uri)
+      print("|")
+      print("|  STATUS: NONE AXIS WEBCAM FOUND")
+      print("|    ABORT: http response code: "..check_uri.status.." [Method Not Allowed]")
+      print("|      Module Author: r00t-3xp10it & Cleiton Pinheiro")
+      print("|_\n")
+
+      -- append data to logfile
+      if ( logfile ~= "false" ) then
+          local file = io.open(logfile, "a")
+          file:write("|AXISwebcam-enum:\n")
+          file:write("|  Brute force AXIS network camera URL:\n")
+          file:write("|    ["..check_uri.status.."] "..host.ip..":"..port.number.." => "..uri.."\n")
+          file:write("|\n")
+          file:write("|  STATUS: NONE AXIS WEBCAM FOUND\n")
+          file:write("|    ABORT: http response code: "..check_uri.status.." [Method Not Allowed]\n")
+          file:write("|        Module Author: r00t-3xp10it & Cleiton Pinheiro\n")
+          file:write("|_\n")
+          file:close()
+      end
+
+     do return end
+   elseif ( check_uri.status == 500 ) then
+      print("|    ["..check_uri.status.."] "..host.ip..":"..port.number.." => "..uri)
+      print("|")
+      print("|  STATUS: NONE AXIS WEBCAM FOUND")
+      print("|    ABORT: http response code: "..check_uri.status.." [Internal Server Error]")
+      print("|      Module Author: r00t-3xp10it & Cleiton Pinheiro")
+      print("|_\n")
+
+      -- append data to logfile
+      if ( logfile ~= "false" ) then
+          local file = io.open(logfile, "a")
+          file:write("|AXISwebcam-enum:\n")
+          file:write("|  Brute force AXIS network camera URL:\n")
+          file:write("|    ["..check_uri.status.."] "..host.ip..":"..port.number.." => "..uri.."\n")
+          file:write("|\n")
+          file:write("|  STATUS: NONE AXIS WEBCAM FOUND\n")
+          file:write("|    ABORT: http response code: "..check_uri.status.." [Internal Server Error]\n")
+          file:write("|        Module Author: r00t-3xp10it & Cleiton Pinheiro\n")
+          file:write("|_\n")
+          file:close()
+      end
+
+     do return end
+   elseif ( check_uri.status == 502 ) then
+      print("|    ["..check_uri.status.."] "..host.ip..":"..port.number.." => "..uri)
+      print("|")
+      print("|  STATUS: NONE AXIS WEBCAM FOUND")
+      print("|    ABORT: http response code: "..check_uri.status.." [Bad Gateway]")
+      print("|      Module Author: r00t-3xp10it & Cleiton Pinheiro")
+      print("|_\n")
+
+      -- append data to logfile
+      if ( logfile ~= "false" ) then
+          local file = io.open(logfile, "a")
+          file:write("|AXISwebcam-enum:\n")
+          file:write("|  Brute force AXIS network camera URL:\n")
+          file:write("|    ["..check_uri.status.."] "..host.ip..":"..port.number.." => "..uri.."\n")
+          file:write("|\n")
+          file:write("|  STATUS: NONE AXIS WEBCAM FOUND\n")
+          file:write("|    ABORT: http response code: "..check_uri.status.." [Bad Gateway]\n")
+          file:write("|        Module Author: r00t-3xp10it & Cleiton Pinheiro\n")
+          file:write("|_\n")
+          file:close()
+      end
+
+     do return end
+   elseif ( check_uri.status == 503 ) then
+      print("|    ["..check_uri.status.."] "..host.ip..":"..port.number.." => "..uri)
+      print("|")
+      print("|  STATUS: NONE AXIS WEBCAM FOUND")
+      print("|    ABORT: http response code: "..check_uri.status.." [Service Unavailable]")
+      print("|      Module Author: r00t-3xp10it & Cleiton Pinheiro")
+      print("|_\n")
+
+      -- append data to logfile
+      if ( logfile ~= "false" ) then
+          local file = io.open(logfile, "a")
+          file:write("|AXISwebcam-enum:\n")
+          file:write("|  Brute force AXIS network camera URL:\n")
+          file:write("|    ["..check_uri.status.."] "..host.ip..":"..port.number.." => "..uri.."\n")
+          file:write("|\n")
+          file:write("|  STATUS: NONE AXIS WEBCAM FOUND\n")
+          file:write("|    ABORT: http response code: "..check_uri.status.." [Service Unavailable]\n")
+          file:write("|        Module Author: r00t-3xp10it & Cleiton Pinheiro\n")
+          file:write("|_\n")
+          file:close()
+      end
+
+     do return end
+   else
+      print("|    ["..check_uri.status.."] "..host.ip..":"..port.number.." => [unknown]")
+      print("|")
+      print("|  STATUS: NONE AXIS WEBCAM FOUND")
+      print("|    ABORT: http response code: "..check_uri.status.." [unknown]")
+      print("|      Module Author: r00t-3xp10it & Cleiton Pinheiro")
+      print("|_\n")
+
+      -- append data to logfile
+      if ( logfile ~= "false" ) then
+          local file = io.open(logfile, "a")
+          file:write("|AXISwebcam-enum:\n")
+          file:write("|  Brute force AXIS network camera URL:\n")
+          file:write("|    ["..check_uri.status.."] "..host.ip..":"..port.number.." => [unknown]\n")
+          file:write("|\n")
+          file:write("|  STATUS: NONE AXIS WEBCAM FOUND\n")
+          file:write("|    ABORT: http response code: "..check_uri.status.." [unknown]\n")
+          file:write("|        Module Author: r00t-3xp10it & Cleiton Pinheiro\n")
+          file:write("|_\n")
+          file:close()
+      end
+   end
+
+   local options = {header={}}
+   -- Manipulate TCP packet 'header' with false information about attacker :D
+   options['header']['User-Agent'] = stdnse.get_script_args(SCRIPT_NAME..".agent") or "Mozilla/5.0 (iPhone; CPU iPhone OS 6_1_4 like Mac OS X) AppleWebKit/536.26 (KHTML, like Gecko) Version/6.0 Mobile/10B350 Safari/8536.25"
+   options['header']['Accept-Language'] = "en-GB,en;q=0.8,sv"
+   options['header']['Cache-Control'] = "no-store"
+
+   -- Read response from target (http.get)
+   local response = http.get(host, port, uri, options)
+   if ( response.status == 200 ) then
+      local title = string.match(response.body, "<[Tt][Ii][Tt][Ll][Ee][^>]*>([^<]*)</[Tt][Ii][Tt][Ll][Ee]>")
+
+      -- List {table} of HTTP TITLE tags
+      tbl = {"TL-WR740N",
+             "AXIS Video Server",
+             "Live View / - AXIS",
+             "AXIS 2400 Video Server",
+             "Network Camera TUCCAM1",
+             "AXIS 243Q(2) Blade 4.45",
+             "Network Camera Capitanía",
+             "AXIS P5514 Network Camera",
+             "AXIS Q1615 Network Camera",
+             "AXIS P1357 Network Camera",
+             "AXIS M5013 Network Camera",
+             "AXIS M3026 Network Camera",
+             "AXIS M1124 Network Camera",
+             "Network Camera Hwy285/cr43",
+             "Login - Residential Gateway",
+             "Axis 2420 Video Server 2.32",
+             "AXIS Q6045-E Network Camera",
+             "AXIS Q6044-E Network Camera",
+             "Network Camera NetworkCamera",
+             "AXIS P1435-LE Network Camera",
+             "AXIS P1425-LE Network Camera",
+             "Axis 2120 Network Camera 2.34",
+             "Axis 2420 Network Camera 2.30",
+             "Axis 2420 Network Camera 2.31",
+             "Axis 2420 Network Camera 2.32",
+             "AXIS P1365 Mk II Network Camera",
+             "AXIS F34 Network Camera 6.50.2.3",
+             "AXIS 214 PTZ Network Camera 4.49",
+             "Axis 2130 PTZ Network Camera 2.30",
+             "Axis 2130 PTZ Network Camera 2.31",
+             "Axis 2130 PTZ Network Camera 2.32",
+             "AXIS P5635-E Mk II Network Camera",
+             "AXIS Q7401 Video Encoder 5.51.5.1",
+             "AXIS Q6045-E Mk II Network Camera",
+             "AXIS P1353 Network Camera 6.50.2.3",
+             "AXIS M3004 Network Camera 5.51.5.1",
+             "AXIS M1145-L Network Camera 6.50.3",
+             "AXIS M2025-LE Network Camera 8.50.1",
+             "Live view / - AXIS 205 version 4.03",
+             "Live view  - AXIS 240Q Video Server",
+             "Live view  - AXIS 221 Network Camera",
+             "Live view  - AXIS 211 Network Camera",
+             "AXIS Q1765-LE Network Camera 5.55.2.3",
+             "Live view  - AXIS P1354 Network Camera",
+             "Live view  - AXIS P1344 Network Camera",
+             "Live view  - AXIS M1114 Network Camera",
+             "Live view  - AXIS M1103 Network Camera",
+             "Live view  - AXIS M1025 Network Camera",
+             "AXIS P1354 Fixed Network Camera 6.50.3",
+             "AXIS P1354 Fixed Network Camera 5.60.1",
+             "AXIS V5914 PTZ Network Camera 5.75.1.11",
+             "Live view - AXIS P5534-E Network Camera",
+             "Live view  - AXIS 215 PTZ Network Camera",
+             "Live view  - AXIS 214 PTZ Network Camera",
+             "Live view  - AXIS 213 PTZ Network Camera",
+             "AXIS P5534 PTZ Dome Network Camera 5.51.5",
+             "AXIS Q6034-E PTZ Dome Network Camera 5.41.4",
+             "AXIS P3354 Fixed Dome Network Camera 5.40.17",
+             "AXIS Q6042-E PTZ Dome Network Camera 5.70.1.4",
+             "AXIS Q3505 Fixed Dome Network Camera 6.30.1.1",
+             "Live view - AXIS 206M Network Camera version 4.11",
+             "Live view  - AXIS 211 Network Camera version 4.11",
+             "Live view  - AXIS 211 Network Camera version 4.10",
+             "Live view / - AXIS 205 Network Camera version 4.04",
+             "Live view / - AXIS 205 Network Camera version 4.05",
+             "AXIS P5635-E Mk II PTZ Dome Network Camera 8.40.2.2",
+             "Live view / - AXIS 205 Network Camera version 4.05.1",
+             "Live view - AXIS 213 PTZ Network Camera version 4.12"}
+
+      -- nil error handling
+      if ( title == nil ) then
+         print("|")
+         print("|  STATUS: AXIS WEBCAM MATCHING URI FOUND")
+         print("|    TITLE: webpage doesn't have a <title> tag? [response:nil]")
+         print("|      URI ACCESS: http://"..host.ip..":"..port.number..uri.." ")
+         print("|        Module Author: r00t-3xp10it & Cleiton Pinheiro")
+         print("|_\n")
+
+         -- append data to logfile
+         if ( logfile ~= "false" ) then
+             local file = io.open(logfile, "a")
+             file:write("|AXISwebcam-enum:\n")
+             file:write("|  Brute force AXIS network camera URL:\n")
+             file:write("|\n")
+             file:write("|  STATUS: AXIS WEBCAM MATCHING URI FOUND\n")
+             file:write("|    TITLE: webpage doesn't have a <title> tag? [response:nil]\n")
+             file:write("|      URI ACCESS: http://"..host.ip..":"..port.number..uri.."\n")
+             file:write("|        Module Author: r00t-3xp10it & Cleiton Pinheiro\n")
+             file:write("|_\n")
+             file:close()
+         end
+
+        do return end
+      end
+
+      -- Loop Through {table} of HTTP TITLE tags
+      for i, intable in pairs(tbl) do
+         local validar = string.match(title, intable)
+         if ( validar ~= nil or title == intable ) then     --> uri found + version-vendor retrieved from <title>
+            print("|\n|   STATUS: AXIS WEBCAM FOUND\n|     TITLE: "..intable.."\n|       WEBCAM ACCESS: http://"..host.ip..":"..port.number..uri.."\n|         Module Author: r00t-3xp10it & Cleiton Pinheiro\n|_\n")
+
+            -- append data to logfile
+            if ( logfile ~= "false" ) then
+                local file = io.open(logfile, "a")
+                file:write("|AXISwebcam-enum:\n")
+                file:write("|  Brute force AXIS network camera URL:\n")
+                file:write("|\n")
+                file:write("|  STATUS: AXIS WEBCAM FOUND\n")
+                file:write("|    TITLE: "..intable.."\n")
+                file:write("|      URI ACCESS: http://"..host.ip..":"..port.number..uri.."\n")
+                file:write("|        Module Author: r00t-3xp10it & Cleiton Pinheiro\n")
+                file:write("|_\n")
+                file:close()
+            end
+
            break
-        else
-           titletag = titletag+1
-           if (titletag == 68) then   --> uri found - but failed to match version-vendor from <title>
-             print("|\n|   STATUS: AXIS WEBCAM MATCHING URI FOUND\n|     TITLE: failed to match version-vendor from <title>\n|       URI ACCESS: http://"..host.ip..":"..port.number..uri.."\n|         Module Author: r00t-3xp10it & Cleiton Pinheiro\n|_\n")
-             do return end
-           end
-        end
-     end
-  end
+         else
+            titletag = titletag+1
+            if (titletag == 68) then   --> uri found - but failed to match version-vendor from <title>
+               print("|\n|   STATUS: AXIS WEBCAM MATCHING URI FOUND\n|     TITLE: failed to match version-vendor from <title>\n|       URI ACCESS: http://"..host.ip..":"..port.number..uri.."\n|         Module Author: r00t-3xp10it & Cleiton Pinheiro\n|_\n")
+
+               -- append data to logfile
+               if ( logfile ~= "false" ) then
+                   local file = io.open(logfile, "a")
+                   file:write("|AXISwebcam-enum:\n")
+                   file:write("|  Brute force AXIS network camera URL:\n")
+                   file:write("|\n")
+                   file:write("|  STATUS: AXIS WEBCAM MATCHING URI FOUND\n")
+                   file:write("|    TITLE: failed to match version-vendor from <title>\n")
+                   file:write("|      URI ACCESS: http://"..host.ip..":"..port.number..uri.."\n")
+                   file:write("|        Module Author: r00t-3xp10it & Cleiton Pinheiro\n")
+                   file:write("|_\n")
+                   file:close()
+               end
+
+              do return end
+            end
+         end
+      end
+   end
 end
