@@ -1,16 +1,20 @@
 ---
--- Nmap NSE AXISwebcam-enum.nse - Version 1.15
+-- Nmap NSE AXISwebcam-enum.nse - Version 1.16
 -- [linux:admin] Copy to: /usr/share/nmap/scripts/AXISwebcam-enum.nse
 -- [linux:admin] Update NSE database: sudo nmap --script-updatedb
 -- [windows:admin] copy to: C:\Program Files (x86)\nmap\scripts\AXISwebcam-enum.nse
 -- [windows:admin] Update NSE database: nmap --script-updatedb
 -- Help: nmap --script-help AXISwebcam-enum.nse
 --
--- Version 1.15 update:
--- [1] @args.logfile="C:\Users\Nmap_scan.txt" --> creates or appends scan data to existing logfile.txt
--- [2] URI's added: /img/video.asf, /axis-cgi/mjpg/video.cgi, /axis-media/media.amp, /axis-cgi/media.cgi
--- [3] stdnse.sleep(1.5) --> added sleep() xx seconds function to AXISwebcam-enum sourcecode
--- [4] res.status == nil --> webserver stop responding to our probes after a while: fixed
+-- Version 1.15 update
+-- [1] fix: nse script color scheme (output colorization) throws errors (deleted)
+-- [2] fix: use livrary stdnse.sleep(1.5) to invoke sleep() functions insted of invoking io.sleep()
+-- [3] @args.logfile = "C:\Users\Nmap_scan.txt" --> create or appends scan data to existing logfile.txt
+-- [4] URI's added: /img/video.asf, /axis-cgi/mjpg/video.cgi, /axis-media/media.amp, /axis-cgi/media.cgi
+--
+-- Version 1.16 update
+-- [1] fix: res.status == nil --> host webserver stop responding to our probes after a while
+-- [2] URI's added: /fullsize.jpg?camera=, /hugesize.jpg?camera=, /videostream.asf?user=
 ---
 
 description = [[
@@ -27,7 +31,7 @@ nmap --script-help AXISwebcam-enum.nse
 nmap -sS -T4 222.155.98.15 -p 8081 --open --script AXISwebcam-enum
 nmap -sV -T3 183.95.71.129 -p 8081 --open --script AXISwebcam-enum --script-args logfile="C:\Users\Nmap_scan.txt"
 nmap -sS -T4 192.46.209.62 -p 8082 --script AXISwebcam-enum --script-args agent="Mozilla/5.0 (compatible; EvilMonkey)"
-nmap -sS -T4 193.93.22.133 -p 8080 --open --script AXISwebcam-enum --script-args agent="Mozilla/5.0 (compatible),uri=/fd"
+nmap -sS -T4 193.93.22.133 -p 8080 --open --script AXISwebcam-enum --script-args agent="Mozilla/5.0",uri="/index.shtml"
 nmap -sS -T4 161.81.122.107 -p 8080-8082 --open --script AXISwebcam-enum --script-args uri="/CgiStart/loadingpage=cam.shtml"
 nmap -sS -v -T5 -iR 800 -p 8080-8082 --open --script AXISwebcam-enum -D 4.207.247.138,52.123.131.14
 
@@ -52,7 +56,7 @@ Outputs
 -- nmap -sS -T4 222.155.98.15 -p 8081 --open --script AXISwebcam-enum
 -- nmap -sV -T3 183.95.71.129 -p 8081 --open --script AXISwebcam-enum --script-args logfile="C:\Users\Nmap_scan.txt"
 -- nmap -sS -T4 192.46.209.62 -p 8082 --script AXISwebcam-enum --script-args agent="Mozilla/5.0 (compatible; EvilMonkey)"
--- nmap -sS -T4 193.93.22.133 -p 8080 --open --script AXISwebcam-enum --script-args agent="Mozilla/5.0 (compatible),uri=/fd"
+-- nmap -sS -T4 193.93.22.133 -p 8080 --open --script AXISwebcam-enum --script-args agent="Mozilla/5.0",uri="/index.shtml"
 -- nmap -sS -T4 161.81.122.107 -p 8080-8082 --open --script AXISwebcam-enum --script-args uri="/CgiStart/loadingpage=cam.shtml"
 -- nmap -sS -v -T5 -iR 800 -p 8080-8082 --open --script AXISwebcam-enum -D 4.207.247.138,52.123.131.14
 -- @output
@@ -126,7 +130,7 @@ action = function(host, port)
     elseif ( check_uri.status == 404 ) then
         print("|    ["..check_uri.status.."] "..host.ip..":"..port.number.." => "..uri)
         -- Source: https://camera-sdk.com/p_6646-how-to-connect-to-a-axis-camera.html
-        uril = {"/axis-cgi/media.cgi", "/axis-media/media.amp", "/axis-cgi/mjpg/video.cgi", "/webcam_code.php", "/view/view.shtml", "/indexFrame.shtml", "/view/index.shtml", "/view/index2.shtml", "/webcam/view.shtml", "/ViewerFrame.shtml", "/RecordFrame?Mode=", "/MultiCameraFrame?Mode=", "/view/viewer_index.shtml", "/visitor_center/i-cam.html", "/index.shtml", "/stadscam/Live95j.asp", "/sub06/cam.php", "/CgiStart", "/img/video.asf"}
+        uril = {"/CgiStart?page=", "/axis-cgi/media.cgi", "/axis-media/media.amp", "/axis-cgi/mjpg/video.cgi", "/videostream.asf?user=", "/hugesize.jpg?camera=", "/fullsize.jpg?camera=", "/webcam_code.php", "/view/view.shtml", "/indexFrame.shtml", "/view/index.shtml", "/view/index2.shtml", "/webcam/view.shtml", "/ViewerFrame.shtml", "/RecordFrame?Mode=", "/MultiCameraFrame?Mode=", "/view/viewer_index.shtml", "/visitor_center/i-cam.html", "/index.shtml", "/stadscam/Live95j.asp", "/sub06/cam.php", "/img/video.asf"}
 
         -- loop Through {table} of uri url's
         for i, intable in pairs(uril) do
@@ -163,7 +167,7 @@ action = function(host, port)
                     print("|    ["..res.status.."] "..host.ip..":"..port.number.." => "..intable)
                 end
 
-                if ( limmit == 19 ) then --> why 19? Because its the number of URI links present in the {uril} list.
+                if ( limmit == 22 ) then --> why 22? Because its the number of URI links present in the {uril} list.
                     print("|")
                     print("|  STATUS: NONE AXIS WEBCAM URI FOUND")
                     print("|    REASON: script didnt find any uri matches in our database")
@@ -190,7 +194,7 @@ action = function(host, port)
             end
         end
 
-    -- diferent Http response codes
+        -- diferent Http response codes
     elseif ( check_uri.status == nil ) then
         print("|    [NIL] "..host.ip..":"..port.number.." => [socket error]")
         print("|")
