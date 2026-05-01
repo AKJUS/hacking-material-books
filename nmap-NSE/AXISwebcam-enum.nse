@@ -25,7 +25,13 @@ NSE script to detect if target [ip]:[port][/url] its an AXIS Network Camera tran
 This script also allow is users to send a fake User-Agent in the tcp packet <agent=User-Agent-String>
 also allow is users to input a diferent uri= [/url] link to be scan, IF none uri= value its inputed, then
 this script tests a List of AXIS default [/url's] available in our database to brute force url access link.
-Remark: 'This nse script does not brute force any authentication login of webcams found (only enumeration)'
+remark: 'This nse script does not brute force any authentication login of webcams found (only enumeration)'
+
+how detection works
+AXISwebcam-enum.nse attempts to find the webcam access link [uri] by comparing links in its internal database
+against the target host:port/uri - If a match is found, the script attempts to extract the webcam's model and
+manufacturer from the http <title> tag as a final check before identifying the target as an active AXIS webcam
+remark: 'This nse script will NOT produce outputs while brute forcing webcam version\vendor from <title> tag'
 
 Syntax examples
 nmap --script-help AXISwebcam-enum.nse
@@ -81,15 +87,22 @@ author = "r00t-3xp10it & Cleiton Pinheiro"
 license = "Same as Nmap--See http://nmap.org/book/man-legal.html"
 categories = {"safe", "discovery"}
 
--- requires (lua librarys)
+-- required (lua librarys)
 local stdnse = require "stdnse"
 local shortport = require "shortport"
 local string = require "string"
 local http = require "http"
 
--- define loop limmit(s)
-titletag = 0
-limmit = 0
+-- nse script @arguments declarations
+local uri = stdnse.get_script_args(SCRIPT_NAME..".uri") or "/indexFrame.shtml"
+local logfile = stdnse.get_script_args(SCRIPT_NAME..".logfile") or "false"
+
+local options = {header={}}
+-- Manipulate TCP packet 'header' with false information about attacker :D
+options['header']['User-Agent'] = stdnse.get_script_args(SCRIPT_NAME..".agent") or "Mozilla/5.0 (iPhone; CPU iPhone OS 6_1_4 like Mac OS X) AppleWebKit/536.26 (KHTML, like Gecko) Version/6.0 Mobile/10B350 Safari/8536.25"
+options['header']['Accept-Language'] = "en-GB,en;q=0.8,sv"
+options['header']['Cache-Control'] = "no-store"
+
 
 portrule = shortport.port_or_service({80, 81, 82, 83, 84, 85, 86, 92, 8080, 8081, 8082, 8083, 55752, 55754}, "http, http-proxy", "tcp", "open")
 
@@ -97,46 +110,43 @@ action = function(host, port)
     print("|AXISwebcam-enum:")
     print("|  Brute force AXIS network camera URL:")
 
-    -- nse script @arguments declaration
-    uri = stdnse.get_script_args(SCRIPT_NAME..".uri") or "/indexFrame.shtml"
-    logfile = stdnse.get_script_args(SCRIPT_NAME..".logfile") or "false"
-
-    -- Check User Input uri response
-    local check_uri = http.get(host, port, uri)
+    -- Check target host http.response.codes
+    local check_uri = http.get(host, port, uri, options)
     if ( check_uri.status == 401 ) then   --> uri auth login found
         print("|    ["..check_uri.status.."] => http://"..host.ip..":"..port.number..uri.." (AUTH LOGIN FOUND)")
         print("|")
-        print("|  STATUS: POSSIBLE AXIS WEBCAM FOUND")
+        print("|  STATUS: POSSIBLE AXIS WEBCAM FOUND?")
         print("|    WEBCAM ACCESS: http://"..host.ip..":"..port.number..uri.." [LOGIN]")
         print("|      ABORT SCANS: webcam access requires authentication login")
         print("|        Module Author: r00t-3xp10it & Cleiton Pinheiro")
         print("|_\n")
 
-        -- append data to logfile
+        -- append data to logfile?
         if ( logfile ~= "false" ) then
             local file = io.open(logfile, "a")
             file:write("|AXISwebcam-enum:\n")
             file:write("|  Brute force AXIS network camera URL:\n")
             file:write("|    ["..check_uri.status.."] => http://"..host.ip..":"..port.number..uri.." (AUTH LOGIN FOUND)\n")
             file:write("|\n")
-            file:write("|  STATUS: POSSIBLE AXIS WEBCAM FOUND\n")
+            file:write("|  STATUS: POSSIBLE AXIS WEBCAM FOUND?\n")
             file:write("|    WEBCAM ACCESS: http://"..host.ip..":"..port.number..uri.." [LOGIN]\n")
             file:write("|      ABORT SCANS: webcam access requires authentication login\n")
             file:write("|        Module Author: r00t-3xp10it & Cleiton Pinheiro\n")
             file:write("|_\n")
             file:close()
         end
-        return
+    return
 
-    elseif ( check_uri.status == 404 ) then
+    elseif ( check_uri.status == 404 ) then  --> uri not found
         print("|    ["..check_uri.status.."] "..host.ip..":"..port.number.." => "..uri)
         -- Source: https://camera-sdk.com/p_6646-how-to-connect-to-a-axis-camera.html
         uril = {"/CgiStart?page=", "/axis-cgi/media.cgi", "/axis-media/media.amp", "/axis-cgi/mjpg/video.cgi", "/videostream.asf?user=", "/hugesize.jpg?camera=", "/fullsize.jpg?camera=", "/webcam_code.php", "/view/view.shtml", "/indexFrame.shtml", "/view/index.shtml", "/view/index2.shtml", "/webcam/view.shtml", "/ViewerFrame.shtml", "/RecordFrame?Mode=", "/MultiCameraFrame?Mode=", "/view/viewer_index.shtml", "/visitor_center/i-cam.html", "/index.shtml", "/mjpg/video.mjpg", "/mpeg4/media.amp", "/mjpg/1/video.mjpg", "/stadscam/Live95j.asp", "/sub06/cam.php", "/img/video.asf"}
 
+        limmit = 0
         -- loop Through {table} of uri url's
         for i, intable in pairs(uril) do
             local res = http.get(host, port, intable)
-            if ( res.status == 200 ) then
+            if ( res.status == 200 ) then  --> he found one alive [200 = OK]
                 print("|    ["..res.status.."] "..host.ip..":"..port.number.." => "..intable.." [online]")
                 uri = intable
                 break
@@ -150,7 +160,7 @@ action = function(host, port)
                     print("|        Module Author: r00t-3xp10it & Cleiton Pinheiro")
                     print("|_\n")
 
-                    -- append data to logfile
+                    -- append data to logfile?
                     if ( logfile ~= "false" ) then
                         local file = io.open(logfile, "a")
                         file:write("|AXISwebcam-enum:\n")
@@ -195,7 +205,7 @@ action = function(host, port)
             end
         end
 
-        -- diferent Http response codes
+    -- diferent Http response codes
     elseif ( check_uri.status == nil ) then
         print("|    [NIL] "..host.ip..":"..port.number.." => [socket error]")
         print("|")
@@ -204,7 +214,7 @@ action = function(host, port)
         print("|      Module Author: r00t-3xp10it & Cleiton Pinheiro")
         print("|_\n")
 
-        -- append data to logfile
+        -- append data to logfile?
         if ( logfile ~= "false" ) then
             local file = io.open(logfile, "a")
             file:write("|AXISwebcam-enum:\n")
@@ -220,7 +230,8 @@ action = function(host, port)
 
         do return end
     elseif ( check_uri.status == 200 ) then
-        -- we have a possitive http response code [200 = ok]
+        -- we have a possitive http.response.code [200 = OK]
+        -- send uri for second test (search webcam version\vendor from <title> tag)
         print("|    ["..check_uri.status.."] "..host.ip..":"..port.number.." => "..uri)
     elseif ( check_uri.status == 301 ) then
         print("|    ["..check_uri.status.."] "..host.ip..":"..port.number.." => "..uri)
@@ -230,7 +241,7 @@ action = function(host, port)
         print("|      Module Author: r00t-3xp10it & Cleiton Pinheiro")
         print("|_\n")
 
-        -- append data to logfile
+        -- append data to logfile?
         if ( logfile ~= "false" ) then
             local file = io.open(logfile, "a")
             file:write("|AXISwebcam-enum:\n")
@@ -253,7 +264,7 @@ action = function(host, port)
         print("|      Module Author: r00t-3xp10it & Cleiton Pinheiro")
         print("|_\n")
 
-        -- append data to logfile
+        -- append data to logfile?
         if ( logfile ~= "false" ) then
             local file = io.open(logfile, "a")
             file:write("|AXISwebcam-enum:\n")
@@ -276,7 +287,7 @@ action = function(host, port)
         print("|      Module Author: r00t-3xp10it & Cleiton Pinheiro")
         print("|_\n")
 
-        -- append data to logfile
+        -- append data to logfile?
         if ( logfile ~= "false" ) then
             local file = io.open(logfile, "a")
             file:write("|AXISwebcam-enum:\n")
@@ -300,7 +311,7 @@ action = function(host, port)
         print("|      Module Author: r00t-3xp10it & Cleiton Pinheiro")
         print("|_\n")
 
-        -- append data to logfile
+        -- append data to logfile?
         if ( logfile ~= "false" ) then
             local file = io.open(logfile, "a")
             file:write("|AXISwebcam-enum:\n")
@@ -323,7 +334,7 @@ action = function(host, port)
         print("|      Module Author: r00t-3xp10it & Cleiton Pinheiro")
         print("|_\n")
 
-        -- append data to logfile
+        -- append data to logfile?
         if ( logfile ~= "false" ) then
             local file = io.open(logfile, "a")
             file:write("|AXISwebcam-enum:\n")
@@ -346,7 +357,7 @@ action = function(host, port)
         print("|      Module Author: r00t-3xp10it & Cleiton Pinheiro")
         print("|_\n")
 
-        -- append data to logfile
+        -- append data to logfile?
         if ( logfile ~= "false" ) then
             local file = io.open(logfile, "a")
             file:write("|AXISwebcam-enum:\n")
@@ -369,7 +380,7 @@ action = function(host, port)
         print("|      Module Author: r00t-3xp10it & Cleiton Pinheiro")
         print("|_\n")
 
-        -- append data to logfile
+        -- append data to logfile?
         if ( logfile ~= "false" ) then
             local file = io.open(logfile, "a")
             file:write("|AXISwebcam-enum:\n")
@@ -392,7 +403,7 @@ action = function(host, port)
         print("|      Module Author: r00t-3xp10it & Cleiton Pinheiro")
         print("|_\n")
 
-        -- append data to logfile
+        -- append data to logfile?
         if ( logfile ~= "false" ) then
             local file = io.open(logfile, "a")
             file:write("|AXISwebcam-enum:\n")
@@ -415,7 +426,7 @@ action = function(host, port)
         print("|      Module Author: r00t-3xp10it & Cleiton Pinheiro")
         print("|_\n")
 
-        -- append data to logfile
+        -- append data to logfile?
         if ( logfile ~= "false" ) then
             local file = io.open(logfile, "a")
             file:write("|AXISwebcam-enum:\n")
@@ -430,13 +441,8 @@ action = function(host, port)
         end
     end
 
-    local options = {header={}}
-    -- Manipulate TCP packet 'header' with false information about attacker :D
-    options['header']['User-Agent'] = stdnse.get_script_args(SCRIPT_NAME..".agent") or "Mozilla/5.0 (iPhone; CPU iPhone OS 6_1_4 like Mac OS X) AppleWebKit/536.26 (KHTML, like Gecko) Version/6.0 Mobile/10B350 Safari/8536.25"
-    options['header']['Accept-Language'] = "en-GB,en;q=0.8,sv"
-    options['header']['Cache-Control'] = "no-store"
-
     -- Read response from target (http.get)
+    -- search for webcam version\vendor from <title> tag
     local response = http.get(host, port, uri, options)
     if ( response.status == 200 ) then
         local title = string.match(response.body, "<[Tt][Ii][Tt][Ll][Ee][^>]*>([^<]*)</[Tt][Ii][Tt][Ll][Ee]>")
@@ -506,6 +512,7 @@ action = function(host, port)
                "Live view - AXIS 213 PTZ Network Camera version"}
 
         -- nil error handling
+        -- cant find any <title> tag
         if ( title == nil ) then
             print("|")
             print("|  STATUS: AXIS WEBCAM MATCHING URI FOUND")
@@ -514,7 +521,7 @@ action = function(host, port)
             print("|        Module Author: r00t-3xp10it & Cleiton Pinheiro")
             print("|_\n")
 
-            -- append data to logfile
+            -- append data to logfile?
             if ( logfile ~= "false" ) then
                 local file = io.open(logfile, "a")
                 file:write("|AXISwebcam-enum:\n")
@@ -528,10 +535,10 @@ action = function(host, port)
                 file:write("|_\n")
                 file:close()
             end
-
             do return end
         end
 
+        titletag = 0
         -- Loop Through {table} of HTTP TITLE tags
         for i, intable in pairs(tbl) do
             local validar = string.match(title, intable)
@@ -543,7 +550,7 @@ action = function(host, port)
                 print("|         Module Author: r00t-3xp10it & Cleiton Pinheiro")
                 print("|_\n")
 
-                -- append data to logfile
+                -- append data to logfile?
                 if ( logfile ~= "false" ) then
                     local file = io.open(logfile, "a")
                     file:write("|AXISwebcam-enum:\n")
@@ -568,7 +575,7 @@ action = function(host, port)
                     print("|         Module Author: r00t-3xp10it & Cleiton Pinheiro")
                     print("|_\n")
 
-                    -- append data to logfile
+                    -- append data to logfile?
                     if ( logfile ~= "false" ) then
                         local file = io.open(logfile, "a")
                         file:write("|AXISwebcam-enum:\n")
