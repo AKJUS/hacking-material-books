@@ -109,6 +109,7 @@ If($Mode -imatch '^(update)$')
 ## cleanup
 Remove-Item -Path "$Env:TMP\vulners.nse" -Force
 Remove-Item -Path "$Env:TMP\AXISwebcam-enum.nse" -Force
+start-sleep -seconds 4
 
 echo ""
 # Here's the command to delete itself.
