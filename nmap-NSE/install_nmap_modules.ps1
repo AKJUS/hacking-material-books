@@ -132,5 +132,4 @@ Remove-Item -Path "$Env:TMP\AXISwebcam-enum.nse" -Force
 Start-Sleep -Seconds 4
 
 echo ""
-# Here's the command to delete itself.
-Remove-Item -Path $MyInvocation.MyCommand.Source
+exit
