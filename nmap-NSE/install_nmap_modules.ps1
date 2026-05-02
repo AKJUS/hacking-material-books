@@ -6,6 +6,7 @@
 .NOTES
    Administrator privileges required to install\update modules
    .\install_nmap_modules.ps1 -mode 'update' --> update nmap databse with the two scripts again
+   .\install_nmap_modules.ps1 -nmapinstallpath 'C:\Nmap\Install\directory' --> nmap install location  
 #>
 
 [CmdletBinding(PositionalBinding=$false)] param(
@@ -106,8 +107,16 @@ If($Mode -imatch '^(update)$')
    Write-Host "[*] move AXISwebcam-enum.nse to $NmapInstallPath\scripts\AXISwebcam-enum.nse"
    Move-Item -Path "$Env:TMP\AXISwebcam-enum.nse" -Destination "$NmapInstallPath\scripts\AXISwebcam-enum.nse" -Force
 
-   Write-Host "[+] updating nmap nse database with downloaded script" -ForegroundColor Green
-   nmap.exe --script-updatedb
+  if (Test-path -path "$NmapInstallPath\scripts\AXISwebcam-enum.nse" -PathType Leaf)
+  {
+     Write-Host "[*] moved AXISwebcam-enum.nse to nmap scripts directory"
+     Write-Host "[+] updating nmap nse database with AXISwebcam-enum.nse"
+     nmap.exe --script-updatedb
+  }
+  Else
+  {
+     Write-Host "[-] ERROR: moving AXISwebcam-enum.nse to nmap scripts directory" -ForegroundColor Red
+  }
 }
 
 ## cleanup
@@ -117,4 +126,4 @@ Start-Sleep -Seconds 4
 
 echo ""
 # Here's the command to delete itself.
-#Remove-Item -Path $MyInvocation.MyCommand.Source
+Remove-Item -Path $MyInvocation.MyCommand.Source
