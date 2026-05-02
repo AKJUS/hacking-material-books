@@ -58,7 +58,7 @@ If($Mode -imatch '^(install)$')
    }
    Else
    {
-      Write-Host "[*] downloading: vulners.nse"
+      Write-Host "`n[*] downloading: vulners.nse"
       iwr -Uri "https://raw.githubusercontent.com/r00t-3xp10it/hacking-material-books/refs/heads/master/nmap-NSE/vulners.nse" -OutFile "$Env:TMP\vulners.nse"|Unblock-File
       Write-Host "[*] move vulners.nse to $NmapInstallPath\scripts\vulners.nse"
       Move-Item -Path "$Env:TMP\vulners.nse" -Destination "$NmapInstallPath\scripts\vulners.nse" -Force
@@ -68,6 +68,7 @@ If($Mode -imatch '^(install)$')
          Write-Host "[*] moved vulners.nse to nmap scripts directory"
          Write-Host "[+] updating nmap nse database with vulners.nse"
          nmap.exe --script-updatedb
+         Write-Host ""
       }
       Else
       {
@@ -84,7 +85,7 @@ If($Mode -imatch '^(install)$')
    }
    Else
    {
-      Write-Host "[*] downloading: AXISwebcam-enum.nse"
+      Write-Host "`n[*] downloading: AXISwebcam-enum.nse"
       iwr -Uri "https://raw.githubusercontent.com/r00t-3xp10it/hacking-material-books/refs/heads/master/nmap-NSE/AXISwebcam-enum.nse" -OutFile "$Env:TMP\AXISwebcam-enum.nse"|Unblock-File
       Write-Host "[*] move AXISwebcam-enum.nse to $NmapInstallPath\scripts\AXISwebcam-enum.nse"
       Move-Item -Path "$Env:TMP\AXISwebcam-enum.nse" -Destination "$NmapInstallPath\scripts\AXISwebcam-enum.nse" -Force
@@ -94,6 +95,7 @@ If($Mode -imatch '^(install)$')
          Write-Host "[*] moved AXISwebcam-enum.nse to nmap scripts directory"
          Write-Host "[+] updating nmap nse database with AXISwebcam-enum.nse"
          nmap.exe --script-updatedb
+         Write-Host ""
       }
       Else
       {
@@ -110,7 +112,7 @@ If($Mode -imatch '^(install)$')
    }
    Else
    {
-      Write-Host "[*] downloading: "
+      Write-Host "`n[*] downloading: smtp-vuln-cve2020-28017-through-28026-21nails.nse"
       iwr -Uri "https://raw.githubusercontent.com/r00t-3xp10it/nmap-nse-modules/refs/heads/master/smtp-vuln-cve2020-28017-through-28026-21nails.nse" -OutFile "$Env:TMP\smtp-vuln-cve2020-28017-through-28026-21nails.nse"|Unblock-File
       Write-Host "[*] move smtp-vuln-cve2020-28017-through-28026-21nails.nse to $NmapInstallPath\scripts\smtp-vuln-cve2020-28017-through-28026-21nails.nse"
       Move-Item -Path "$Env:TMP\smtp-vuln-cve2020-28017-through-28026-21nails.nse" -Destination "$NmapInstallPath\scripts\smtp-vuln-cve2020-28017-through-28026-21nails.nse" -Force
@@ -120,6 +122,7 @@ If($Mode -imatch '^(install)$')
          Write-Host "[*] moved smtp-vuln-cve2020-28017-through-28026-21nails.nse to nmap scripts directory"
          Write-Host "[+] updating nmap nse database with smtp-vuln-cve2020-28017-through-28026-21nails.nse"
          nmap.exe --script-updatedb
+         Write-Host ""
       }
       Else
       {
