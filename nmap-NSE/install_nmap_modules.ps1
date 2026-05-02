@@ -20,6 +20,7 @@ echo ""
 If([bool](([System.Security.Principal.WindowsIdentity]::GetCurrent()).groups -match "S-1-5-32-544") -match "false")
 {
    Write-Host "[ABORT]: administrator privileges required to install nse modules..`n" -ForegroundColor Red
+   start-sleep -seconds 4
    return
 }
 
