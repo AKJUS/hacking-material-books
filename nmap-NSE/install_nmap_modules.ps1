@@ -5,7 +5,7 @@
 
 .NOTES
    Administrator privileges required to install\update modules
-   tcpinspector: start-process powershell -argumentlist ".\install_nmap_modules.ps1 -mode 'install'"
+   .\install_nmap_modules.ps1 -mode 'update' --> update nmap databse with the two scripts again
 #>
 
 [CmdletBinding(PositionalBinding=$false)] param(
@@ -113,7 +113,7 @@ If($Mode -imatch '^(update)$')
 ## cleanup
 Remove-Item -Path "$Env:TMP\vulners.nse" -Force
 Remove-Item -Path "$Env:TMP\AXISwebcam-enum.nse" -Force
-Start-Sleep -Seconds 3
+Start-Sleep -Seconds 4
 
 echo ""
 # Here's the command to delete itself.
