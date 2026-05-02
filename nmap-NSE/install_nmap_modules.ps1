@@ -1,5 +1,10 @@
 <#
-      install vulners.nse + AXISwebcam-enum.nse into nmap database
+.SYNOPSIS
+   Author: @r00t-3xp10it
+   Helper - install vulners.nse + AXISwebcam-enum.nse into nmap database
+
+.NOTES
+   Administrator privileges required to install modules
 #>
 
 [CmdletBinding(PositionalBinding=$false)] param(
@@ -73,12 +78,12 @@ else
 If($SuccessfulyInstalledModuleVulners -match "true")
 {
    nmap.exe --script-updatedb
-   Write-Host "[+] Vulners.nse succeffuly installed"
+   Write-Host "[+] Vulners.nse succeffuly installed" -ForegroundColor Green
 }
 If($SuccessfulyInstalledModuleAxis -match "true")
 {
    nmap.exe --script-updatedb
-   Write-Host "[+] AXISwebcam-enum.nse succeffuly installed"
+   Write-Host "[+] AXISwebcam-enum.nse succeffuly installed" -ForegroundColor Green
 }
 
 ## cleanup
@@ -86,4 +91,5 @@ Remove-Item -Path "$Env:TMP\vulners.nse" -Force
 Remove-Item -Path "$Env:TMP\AXISwebcam-enum.nse" -Force
 
 echo ""
-exit
+# Here's the command to delete itself.
+#Remove-Item -Path $MyInvocation.MyCommand.Source
