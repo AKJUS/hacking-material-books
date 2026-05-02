@@ -32,7 +32,7 @@ If([bool](([System.Security.Principal.WindowsIdentity]::GetCurrent()).groups -ma
 If(-not(Test-Path -Path "$NmapInstallPath"))
 {
    Write-Host "[ABORT]: nmap directory not found in: $NmapInstallPath" -ForegroundColor Red
-   Write-Host "Input nmap directory: " -ForegroundColor Red -NoNewline
+   Write-Host "Input nmap directory: " -NoNewline
    $NmapInstallPath = Read-Host
 }
 
