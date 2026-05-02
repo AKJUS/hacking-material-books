@@ -22,7 +22,7 @@ If([bool](([System.Security.Principal.WindowsIdentity]::GetCurrent()).groups -ma
 {
    Write-Host "[ABORT]: " -NoNewline
    Write-Host "administrator privileges required to install nse modules..`n" -ForegroundColor Red
-   Start-Sleep -Seconds 3
+   Start-Sleep -Seconds 2
    return
 }
 
