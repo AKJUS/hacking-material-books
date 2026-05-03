@@ -60,7 +60,7 @@ Outputs
 |  Exploit results:
 |    TITLE: Live view  - AXIS 211 Network Camera version 4.11
 |    WEBCAM ACCESS: http://216.99.115.136:8080/view/index.shtml
-|    Module Author: r00t-3xp10it & Cleiton Pinheiro
+|      Module Author: r00t-3xp10it & Cleiton Pinheiro
 |
 |  Referencies:
 |    https://www.cisa.gov/news-events/ics-advisories/icsa-25-352-08
