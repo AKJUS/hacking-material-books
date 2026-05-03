@@ -1,12 +1,12 @@
 <#
 .SYNOPSIS
    Author: @r00t-3xp10it
-   Helper - install vulners.nse + AXISwebcam-enum.nse into nmap database
-            install also: smtp-vuln-cve2020-28017-through-28026-21nails.nse
+   Helper - install vulners.nse, AXISwebcam-enum.nse, dlink-cve-2019-13101.nse
+            smtp-vuln-cve2020-28017-through-28026-21nails.nse into nmap database
 
 .NOTES
    Administrator privileges required to install\update modules
-   .\install_nmap_modules.ps1 -mode 'install' --> install the 3 nse scripts in nmap database
+   .\install_nmap_modules.ps1 -mode 'install' --> install the 4 nse scripts in nmap database
    .\install_nmap_modules.ps1 -mode 'update'  --> update nmap databse with AXISwebcam-enum.nse again
    .\install_nmap_modules.ps1 -nmapinstallpath 'C:\Nmap\Install\directory' --> nmap install location
 #>
@@ -43,10 +43,12 @@ If(-not(Test-Path -Path "$NmapInstallPath"))
    }
 }
 
-## Install modules
+
+## Install 4 nse modules into nse database
+# TCPinspector.ps1 requires this modules
 If($Mode -imatch '^(install)$')
 {
-   Write-Host "[*] installing 3 nmap nse scripts" -ForegroundColor Green
+   Write-Host "[*] installing 4 nmap nse scripts" -ForegroundColor Green
    Start-Sleep -Seconds 1
 
    ## install Vulners.nse
@@ -129,10 +131,37 @@ If($Mode -imatch '^(install)$')
          Write-Host "[-] ERROR: moving smtp-vuln-cve2020-28017-through-28026-21nails.nse to nmap scripts directory" -ForegroundColor Red
       }
    }
+
+   ## install dlink-cve-2019-13101.nse
+   if (Test-path -path "$NmapInstallPath\scripts\dlink-cve-2019-13101.nse" -PathType Leaf)
+   {
+      write-host "[ABORT]: " -NoNewline
+      write-host "$NmapInstallPath\scripts\dlink-cve-2019-13101.nse" -ForegroundColor Red -NoNewline
+      write-host " already installed"
+   }
+   Else
+   {
+      Write-Host "`n[*] downloading: dlink-cve-2019-13101.nse"
+      iwr -Uri "https://raw.githubusercontent.com/r00t-3xp10it/nmap-nse-modules/refs/heads/master/dlink-cve-2019-13101.nse" -OutFile "$Env:TMP\dlink-cve-2019-13101.nse"|Unblock-File
+      Write-Host "[*] move dlink-cve-2019-13101.nse to $NmapInstallPath\scripts\dlink-cve-2019-13101.nse"
+      Move-Item -Path "$Env:TMP\dlink-cve-2019-13101.nse" -Destination "$NmapInstallPath\scripts\dlink-cve-2019-13101.nse" -Force
+
+      if (Test-path -path "$NmapInstallPath\scripts\dlink-cve-2019-13101.nse" -PathType Leaf)
+      {
+         Write-Host "[*] moved dlink-cve-2019-13101.nse to nmap scripts directory"
+         Write-Host "[+] updating nmap nse database with dlink-cve-2019-13101.nse"
+         nmap.exe --script-updatedb
+         Write-Host ""
+      }
+      Else
+      {
+         Write-Host "[-] ERROR: moving dlink-cve-2019-13101.nse to nmap scripts directory" -ForegroundColor Red
+      }
+   }
 }
 
 
-## update modules
+## Update AXISwebcam-enum.nse
 If($Mode -imatch '^(update)$')
 {
    <#
@@ -172,6 +201,7 @@ If($Mode -imatch '^(update)$')
 ## cleanup
 Remove-Item -Path "$Env:TMP\vulners.nse" -Force
 Remove-Item -Path "$Env:TMP\AXISwebcam-enum.nse" -Force
+Remove-Item -Path "$Env:TMP\dlink-cve-2019-13101.nse" -Force
 Remove-Item -Path "$Env:TMP\smtp-vuln-cve2020-28017-through-28026-21nails.nse" -Force
 Start-Sleep -Seconds 4
 
