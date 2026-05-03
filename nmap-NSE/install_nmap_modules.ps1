@@ -9,11 +9,13 @@
    .\install_nmap_modules.ps1 -mode 'install' --> install the 4 nse scripts in nmap database
    .\install_nmap_modules.ps1 -mode 'update'  --> update nmap databse with AXISwebcam-enum.nse again
    .\install_nmap_modules.ps1 -nmapinstallpath 'C:\Nmap\Install\directory' --> nmap install location
+   .\install_nmap_modules.ps1 -mode 'install' -description --> display module installed descriptions
 #>
 
 [CmdletBinding(PositionalBinding=$false)] param(
    [string]$NmapInstallPath="C:\Program Files (x86)\Nmap",
-   [string]$Mode="install"
+   [string]$Mode="install",
+   [switch]$Description
 )
 
 $ErrorActionPreference = "SilentlyContinue"
@@ -76,6 +78,13 @@ If($Mode -imatch '^(install)$')
       {
          Write-Host "[-] ERROR: moving vulners.nse to nmap scripts directory" -ForegroundColor Red
       }
+
+      ## Display modules description
+      If($Description.IsPresent)
+      {
+         nmap --script-help vulners.nse
+      }
+
    }
 
    ## install AXISwebcam-enum.nse
@@ -102,6 +111,12 @@ If($Mode -imatch '^(install)$')
       Else
       {
          Write-Host "[-] ERROR: moving AXISwebcam-enum.nse to nmap scripts directory" -ForegroundColor Red
+      }
+
+      ## Display modules description
+      If($Description.IsPresent)
+      {
+         nmap --script-help AXISwebcam-enum.nse
       }
    }
 
@@ -130,6 +145,12 @@ If($Mode -imatch '^(install)$')
       {
          Write-Host "[-] ERROR: moving smtp-vuln-cve2020-28017-through-28026-21nails.nse to nmap scripts directory" -ForegroundColor Red
       }
+
+      ## Display modules description
+      If($Description.IsPresent)
+      {
+         nmap --script-help smtp-vuln-cve2020-28017-through-28026-21nails.nse
+      }
    }
 
    ## install dlink-cve-2019-13101.nse
@@ -156,6 +177,12 @@ If($Mode -imatch '^(install)$')
       Else
       {
          Write-Host "[-] ERROR: moving dlink-cve-2019-13101.nse to nmap scripts directory" -ForegroundColor Red
+      }
+
+      ## Display modules description
+      If($Description.IsPresent)
+      {
+         nmap --script-help dlink-cve-2019-13101.nse
       }
    }
 }
@@ -195,6 +222,12 @@ If($Mode -imatch '^(update)$')
    Else
    {
       Write-Host "[-] ERROR: moving AXISwebcam-enum.nse to nmap scripts directory" -ForegroundColor Red
+   }
+
+   ## Display modules description
+   If($Description.IsPresent)
+   {
+      nmap --script-help AXISwebcam-enum.nse
    }
 }
 
