@@ -62,9 +62,9 @@ Outputs
 |    WEBCAM ACCESS: http://216.99.115.136:8080/view/index.shtml
 |    Module Author: r00t-3xp10it & Cleiton Pinheiro
 |
-|    Referencies:
-|      https://www.cisa.gov/news-events/ics-advisories/icsa-25-352-08
-|      https://thehackernews.com/2025/08/6500-axis-servers-expose-remoting.html
+|  Referencies:
+|    https://www.cisa.gov/news-events/ics-advisories/icsa-25-352-08
+|    https://thehackernews.com/2025/08/6500-axis-servers-expose-remoting.html
 |_
 
 ]]
@@ -97,9 +97,9 @@ Outputs
 -- |    WEBCAM ACCESS: http://216.99.115.136:8080/view/index.shtml
 -- |      Module Author: r00t-3xp10it & Cleiton Pinheiro
 -- |
--- |    Referencies:
--- |      https://www.cisa.gov/news-events/ics-advisories/icsa-25-352-08
--- |      https://thehackernews.com/2025/08/6500-axis-servers-expose-remoting.html
+-- |  Referencies:
+-- |    https://www.cisa.gov/news-events/ics-advisories/icsa-25-352-08
+-- |    https://thehackernews.com/2025/08/6500-axis-servers-expose-remoting.html
 -- |_
 -- @args payload.uri the path name to search. default: /indexFrame.shtml
 -- @args payload.agent User-agent to send in request - default: iPhone,safari
